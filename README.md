@@ -1,7 +1,7 @@
 # Dropout-Sportivo
 Tesi di Laurea in Data Science: Individuazione dei predittori più significativi del dropout sportivo in età adolescenziale
 
-Link questionario predittivo abbandono sportivo: dropoutsportivo.pythonanywhere.com
+Link questionario predittivo abbandono sportivo: http://dropoutsportivo.pythonanywhere.com
 
 Il tema di questa tesi è la predizione del dropout sportivo dei minori, nella fascia di età dai 9 ai 17 anni, effettuata assegnando una probabilità di abbandono rispetto a dati anagrafici e una serie di informazioni relative a educazione familiare, sport praticato/i e frequenza, supporto dei genitori, rapporto con i compagni, rapporto con l’allenatore, autoefficacia e gestione del match,
 ricavati tramite un questionario predittivo.
