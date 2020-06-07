@@ -1,0 +1,2054 @@
+---
+title: "01 pre_processing"
+output: html_document
+---
+
+#import dataset grezzo
+```{r}
+dataset_grezzo <- read.csv("Abbandono Sportivo.csv")
+head(dataset_grezzo)
+```
+
+#eliminazione osservazioni non comprese tra 18 e 23 anni (anno di nascita da 1996 a 2000)
+```{r}
+head(dataset_grezzo$Anno.di.nascita)
+data1 <- dataset_grezzo[!(dataset_grezzo$Anno.di.nascita %in% c("", "Open-Ended Response", "2", "21", "1568", "1930", "1955", "1957", "1962", "1967", "1970", "1972", "1984", "1988", "1989", "1990", "1991", "1993", "1994", "1995", "784678364373", "10.06.1800", "01/03/18", "2001", "2003", "2007")),] 
+```
+
+#eliminazioni osservazioni con dati sfasati rispetto alle colonne oppure con tutti valori vuoti
+```{r}
+id_da_eliminare <- read.delim("id.txt")
+data2 <- data1[!(data1$respondent_id %in% id_da_eliminare$id), ]
+```
+
+#distribuzione pratica sportiva
+```{r}
+table(data2$Tra.i.9.e.17.anni...Hai.mai.praticato.sport.)
+```
+
+#costruzione dataset contenente solo le osservazioni di chi ha praticato sport tra i 9 e i 17 anni
+```{r}
+casi_1_2_3 <- data2[data2$Tra.i.9.e.17.anni...Hai.mai.praticato.sport. == "Si", ]
+dim(casi_1_2_3)
+```
+
+#costruzione dataset contenente solo le osservazioni di chi non ha mai praticato sport tra i 9 e i 17 anni
+```{r}
+caso_4 <- data2[data2$Tra.i.9.e.17.anni...Hai.mai.praticato.sport. == "No", ]
+dim(caso_4)
+```
+
+#variabile per distinzione caso 1, 2, 3
+```{r}
+casi_1_2_3$Crocetta.la.risposta.che.ti.rappresenta.â.œLo.sport.piÃ¹.significativo.per.meâ.. <- as.character(casi_1_2_3$Crocetta.la.risposta.che.ti.rappresenta.â.œLo.sport.piÃ¹.significativo.per.meâ..)
+unique(casi_1_2_3$Crocetta.la.risposta.che.ti.rappresenta.â.œLo.sport.piÃ¹.significativo.per.meâ..)
+```
+
+#costruzione dataset contenente le osservazioni di chi ha praticato un solo sport e non l'ha abbandonato prima dei 17 anni (caso 1)
+```{r}
+caso_1 <- casi_1_2_3[casi_1_2_3$Crocetta.la.risposta.che.ti.rappresenta.â.œLo.sport.piÃ¹.significativo.per.meâ.. == "â€¦Ãˆ lâ€™unico che ho fatto tra i 9 e i 17 anni compresiâ€\u009d", ]
+```
+
+#costruzione dataset contenente le osservazioni di chi ha praticato più sport e non ha abbandonato quello più importante prima dei 17 anni (caso 2)
+```{r}
+caso_2 <- casi_1_2_3[casi_1_2_3$Crocetta.la.risposta.che.ti.rappresenta.â.œLo.sport.piÃ¹.significativo.per.meâ.. == "...Ãˆ il piÃ¹ importante tra gli altri sport che ho praticato e a 17 anni lo praticavo ancoraâ€\u009d", ]
+```
+
+#costruzione dataset contenente le osservazioni di chi ha praticato un solo sport e l'ha abbandonato prima dei 17 anni oppure di chi ha praticato più sport e ha abbandonato quello più importante prima dei 17 anni (caso 3)
+```{r}
+caso_3_1 <- casi_1_2_3[casi_1_2_3$Crocetta.la.risposta.che.ti.rappresenta.â.œLo.sport.piÃ¹.significativo.per.meâ.. == "â€¦Ãˆ lâ€™unico che ho fatto tra i 9 e 17 anni ma l ho abbandonato prima dei 17 anniâ€\u009d", ]
+
+caso_3_2 <- casi_1_2_3[casi_1_2_3$Crocetta.la.risposta.che.ti.rappresenta.â.œLo.sport.piÃ¹.significativo.per.meâ.. == "...Ãˆ il piÃ¹ importante tra gli altri sport che ho praticato e l'ho abbandonato prima dei 17 anniâ€\u009d", ]
+```
+
+#dataset con osservazioni con valori vuoti (caso sconosciuto)
+```{r}
+caso_unknown <- casi_1_2_3[casi_1_2_3$Crocetta.la.risposta.che.ti.rappresenta.â.œLo.sport.piÃ¹.significativo.per.meâ.. == "", ]
+```
+
+#divisione caso 1 in 1.1 e 1.2
+```{r}
+table(caso_1$Tra.i.tuoi.9.e.17.anniâ..Hai.mai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..NB..Per.â.œseriamenteâ...si.intende.che.stavi.per.lasciarlo.o.che.lâ..hai.lasciato.per.poco.tempo..massimo.6.mesi..e.poi.hai.ripreso.)
+
+caso_1_1 <- caso_1[caso_1$Tra.i.tuoi.9.e.17.anniâ..Hai.mai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..NB..Per.â.œseriamenteâ...si.intende.che.stavi.per.lasciarlo.o.che.lâ..hai.lasciato.per.poco.tempo..massimo.6.mesi..e.poi.hai.ripreso. == "Si", ]
+
+caso_1_2 <- caso_1[caso_1$Tra.i.tuoi.9.e.17.anniâ..Hai.mai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..NB..Per.â.œseriamenteâ...si.intende.che.stavi.per.lasciarlo.o.che.lâ..hai.lasciato.per.poco.tempo..massimo.6.mesi..e.poi.hai.ripreso. == "No", ]
+
+caso_1_unknown <- caso_1[!(caso_1$Tra.i.tuoi.9.e.17.anniâ..Hai.mai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..NB..Per.â.œseriamenteâ...si.intende.che.stavi.per.lasciarlo.o.che.lâ..hai.lasciato.per.poco.tempo..massimo.6.mesi..e.poi.hai.ripreso. %in% c("Si", "No")), ]
+```
+
+#divisione caso 2 in 2.1 e 2.2
+```{r}
+table(caso_2$Prima.dei.17.anniâ..Hai.mai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..NB..Per.â.œseriamenteâ...si.intende.che.stavi.per.lasciarlo.o.che.lâ..hai.lasciato.per.poco.tempoÂ..massimo.6.mesi..e.poi.hai.ripreso.)
+      
+caso_2_1 <- caso_2[caso_2$Prima.dei.17.anniâ..Hai.mai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..NB..Per.â.œseriamenteâ...si.intende.che.stavi.per.lasciarlo.o.che.lâ..hai.lasciato.per.poco.tempoÂ..massimo.6.mesi..e.poi.hai.ripreso. == "Si", ]
+
+caso_2_2 <- caso_2[caso_2$Prima.dei.17.anniâ..Hai.mai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..NB..Per.â.œseriamenteâ...si.intende.che.stavi.per.lasciarlo.o.che.lâ..hai.lasciato.per.poco.tempoÂ..massimo.6.mesi..e.poi.hai.ripreso. == "No", ]
+
+caso_2_unknown <- caso_2[!(caso_2$Prima.dei.17.anniâ..Hai.mai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..NB..Per.â.œseriamenteâ...si.intende.che.stavi.per.lasciarlo.o.che.lâ..hai.lasciato.per.poco.tempoÂ..massimo.6.mesi..e.poi.hai.ripreso. %in% c("Si", "No")), ]
+```
+
+#costruzione dataset per la classificazione 
+```{r}
+caso_1_1$dropout <- "No"
+caso_1_1$caso <- "1.1"
+caso_1_1$multisport <- "No"
+caso_1_2$dropout <- "No"
+caso_1_2$caso <- "1.2"
+caso_1_2$multisport <- "No"
+caso_2_1$dropout <- "No"
+caso_2_1$caso <- "2.1"
+caso_2_1$multisport <- "Si"
+caso_2_2$dropout <- "No"
+caso_2_2$caso <- "2.2"
+caso_2_2$multisport <- "Si"
+caso_3_1$dropout <- "Si"
+caso_3_1$caso <- "3"
+caso_3_1$multisport <- "No"
+caso_3_2$dropout <- "Si"
+caso_3_2$caso <- "3"
+caso_3_2$multisport <- "Si"
+my_data <- rbind(caso_1_1, caso_1_2, caso_2_1, caso_2_2, caso_3_1, caso_3_2)
+table(my_data$caso, my_data$dropout)
+table(my_data$caso, my_data$multisport)
+```
+
+#preprocessing sulle colonne
+```{r}
+my_data$collector_id <- NULL
+my_data$date_created <- NULL
+my_data$date_modified <- NULL
+my_data$ip_address <- NULL
+my_data$email_address <- NULL
+my_data$first_name <- NULL
+my_data$last_name <- NULL
+my_data$custom_1 <- NULL
+my_data$X <- NULL
+my_data$Titolo.di.studio.raggiunto <- NULL
+my_data$X.1 <- NULL
+my_data$Attualmente... <- NULL
+my_data$In.base.alla.risposta.precedente..indica.qual.Ã..il.tuo.lavoro.e.o.cosa.stai.studiando. <- NULL
+my_data$X.3 <- NULL
+my_data$X.4 <- NULL
+my_data$X.5 <- NULL
+my_data$Tra.i.9.e.17.anni...Hai.mai.praticato.sport. <- NULL
+my_data$Crocetta.la.risposta.che.ti.rappresenta.â.œLo.sport.piÃ¹.significativo.per.meâ.. <- NULL
+my_data$Tra.i.tuoi.9.e.17.anniâ..Hai.mai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..NB..Per.â.œseriamenteâ...si.intende.che.stavi.per.lasciarlo.o.che.lâ..hai.lasciato.per.poco.tempo..massimo.6.mesi..e.poi.hai.ripreso. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..con.che.frequenza.andavi.ad.allenarti. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Frequentaviâ.. <- NULL
+```
+
+#respondent_id
+```{r}
+my_data <- my_data[order(my_data$respondent_id), ]
+head(my_data$respondent_id)
+```
+
+#anno_nascita
+```{r}
+library(stringr)
+my_data$anno_nascita <- NA
+my_data$Anno.di.nascita <- as.character(my_data$Anno.di.nascita)
+for (i in 1:2750) {
+  anno <- str_replace(my_data$Anno.di.nascita[i], " ", "")
+  anno <- substr(anno, nchar(anno), nchar(anno))
+  if (anno=="6") {
+    my_data$anno_nascita[i] <- "1996"
+  }
+  if (anno=="7") {
+    my_data$anno_nascita[i] <- "1997"
+  }
+  if (anno=="8") {
+    my_data$anno_nascita[i] <- "1998"
+  }
+  if (anno=="9" | anno==" ") {
+    my_data$anno_nascita[i] <- "1999"
+  }
+  if (anno=="0") {
+    my_data$anno_nascita[i] <- "2000"
+  }
+}
+my_data$Anno.di.nascita <- NULL
+table(my_data$anno_nascita)
+```
+
+#regione e provenienza saranno fatte dopo
+```{r}
+my_data[, 3] <- NULL
+my_data[, 3] <- NULL
+
+regioni <- read.csv("00 regione.csv", stringsAsFactors = F) 
+my_data$regione <- regioni$regione
+
+prov <- read.csv("00 provenienza.csv", stringsAsFactors = F) 
+my_data$provenienza <- prov$provenienza
+```
+
+#nazionalita
+```{r}
+my_data$NazionalitÃ. <- NULL
+naz <- read.csv("00 nazionalita.csv", stringsAsFactors = F) 
+my_data$nazionalita <- naz$nazionalita
+```
+
+#sesso
+```{r}
+colnames(my_data)[2] <- "sesso"
+my_data[my_data$sesso == "", ]$sesso <- NA
+my_data$sesso <- as.factor(as.character(my_data$sesso))
+unique(my_data$sesso)
+table(my_data$sesso, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$sesso)))
+```
+
+#scuola superiore
+```{r}
+colnames(my_data)[3] <- "scuola_superiore"
+my_data[my_data$scuola_superiore == "", ]$scuola_superiore <- NA
+my_data$scuola_superiore <- as.factor(as.character(my_data$scuola_superiore))
+unique(my_data$scuola_superiore)
+table(my_data$scuola_superiore, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$scuola_superiore)))
+```
+
+#disabilità
+```{r}
+colnames(my_data)[4] <- "disabilita"
+my_data[!(my_data$disabilita %in% c("", "X", "No")), ]$disabilita <- "Si"
+my_data[my_data$X.2 %in% c("X", "x", "No", "no"), ]$disabilita <- "No"
+my_data[my_data$disabilita == unique(my_data$disabilita)[4], ]$disabilita <- "No"
+my_data[my_data$disabilita == unique(my_data$disabilita)[3], ]$disabilita <- "No"
+my_data$disabilita <- as.factor(as.character(my_data$disabilita))
+unique(my_data$disabilita)
+table(my_data$disabilita, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$disabilita)))
+my_data$X.2 <- NULL
+```
+
+#titolo studio madre
+```{r}
+colnames(my_data)[5] <- "titolo_studio_madre"
+my_data[my_data$titolo_studio_madre == "", ]$titolo_studio_madre <- "Non lo so"
+my_data$titolo_studio_madre <- as.factor(as.character(my_data$titolo_studio_madre))
+unique(my_data$titolo_studio_madre)
+table(my_data$titolo_studio_madre, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$titolo_studio_madre)))
+```
+
+#titolo studio padre
+```{r}
+colnames(my_data)[6] <- "titolo_studio_padre"
+my_data[my_data$titolo_studio_padre == "", ]$titolo_studio_padre <- "Non lo so"
+my_data$titolo_studio_padre <- as.factor(as.character(my_data$titolo_studio_padre))
+unique(my_data$titolo_studio_padre)
+table(my_data$titolo_studio_padre, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$titolo_studio_padre)))
+```
+
+#numero fratelli e sorelle
+```{r}
+colnames(my_data)[7] <- "numero_fratelli_sorelle"
+my_data$numero_fratelli_sorelle <- as.character(my_data$numero_fratelli_sorelle)
+my_data[my_data$numero_fratelli_sorelle == "Non ne ho" | my_data$numero_fratelli_sorelle == "", ]$numero_fratelli_sorelle <- 0
+my_data[my_data$numero_fratelli_sorelle == "1", ]$numero_fratelli_sorelle <- 1
+my_data[my_data$numero_fratelli_sorelle == "2", ]$numero_fratelli_sorelle <- 2
+my_data[my_data$numero_fratelli_sorelle == "3", ]$numero_fratelli_sorelle <- 3
+my_data[my_data$numero_fratelli_sorelle == "PiÃ¹ di 3", ]$numero_fratelli_sorelle <- 4
+my_data$numero_fratelli_sorelle <- as.integer(my_data$numero_fratelli_sorelle)
+unique(my_data$numero_fratelli_sorelle)
+table(my_data$numero_fratelli_sorelle, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$numero_fratelli_sorelle)))
+```
+
+#nonni nelle vicinanze
+```{r}
+colnames(my_data)[8] <- "numero_nonni_vicinanza_casa"
+my_data$numero_nonni_vicinanza_casa <- as.character(my_data$numero_nonni_vicinanza_casa)
+my_data[my_data$numero_nonni_vicinanza_casa %in% c("Nessuno", ""), ]$numero_nonni_vicinanza_casa <- 0
+my_data[my_data$numero_nonni_vicinanza_casa == "1", ]$numero_nonni_vicinanza_casa <- 1
+my_data[my_data$numero_nonni_vicinanza_casa == "2", ]$numero_nonni_vicinanza_casa <- 2
+my_data[my_data$numero_nonni_vicinanza_casa == "3", ]$numero_nonni_vicinanza_casa <- 3
+my_data[my_data$numero_nonni_vicinanza_casa == "4", ]$numero_nonni_vicinanza_casa <- 4
+my_data$numero_nonni_vicinanza_casa <- as.integer(my_data$numero_nonni_vicinanza_casa)
+unique(my_data$numero_nonni_vicinanza_casa)
+table(my_data$numero_nonni_vicinanza_casa, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$numero_nonni_vicinanza_casa)))
+```
+
+#figura di riferimento dopo scuola
+```{r}
+colnames(my_data)[9] <- "riferimento_dopo_scuola"
+my_data[my_data$riferimento_dopo_scuola == "", ]$riferimento_dopo_scuola <- "Nessuno"
+my_data$riferimento_dopo_scuola <- as.factor(as.character(my_data$riferimento_dopo_scuola))
+unique(my_data$riferimento_dopo_scuola)
+table(my_data$riferimento_dopo_scuola, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$riferimento_dopo_scuola)))
+```
+
+#cambio residenza
+```{r}
+colnames(my_data)[10] <- "cambio_residenza"
+my_data[!(my_data$cambio_residenza %in% c("No", "no", "")), ]$cambio_residenza <- "Si"
+my_data[my_data$X.6 != "", ]$cambio_residenza <- "No"
+my_data[my_data$cambio_residenza == "", ]$cambio_residenza <- "No"
+my_data[my_data$cambio_residenza == unique(my_data$cambio_residenza)[3], ]$cambio_residenza <- "No"
+my_data$cambio_residenza <- as.factor(as.character(my_data$cambio_residenza))
+unique(my_data$cambio_residenza)
+table(my_data$cambio_residenza, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$cambio_residenza)))
+my_data$X.6 <- NULL
+```
+
+#distanza a piedi da casa alla struttura sportiva più vicina
+```{r}
+my_data[, 11] <- as.character(my_data[, 11])
+unique(my_data[, 11])
+my_data$tempo_casa_struttura_sportiva_piedi <- NA
+my_data[my_data[, 11] == unique(my_data[, 11])[1], ]$tempo_casa_struttura_sportiva_piedi <- "Meno di un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[2], ]$tempo_casa_struttura_sportiva_piedi <- "Più di un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[3], ]$tempo_casa_struttura_sportiva_piedi <- "Un'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[4], ]$tempo_casa_struttura_sportiva_piedi <- "Un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[5], ]$tempo_casa_struttura_sportiva_piedi <- "Più di un'ora"
+my_data$tempo_casa_struttura_sportiva_piedi <- as.character(my_data$tempo_casa_struttura_sportiva_piedi)
+table(my_data$tempo_casa_struttura_sportiva_piedi, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$tempo_casa_struttura_sportiva_piedi)))
+my_data[, 11] <- NULL
+```
+
+#distanza con i mezzi da casa alla struttura sportiva più vicina
+```{r}
+my_data[, 11] <- as.character(my_data[, 11])
+unique(my_data[, 11])
+my_data$tempo_casa_struttura_sportiva_mezzi <- NA
+my_data[my_data[, 11] == unique(my_data[, 11])[1], ]$tempo_casa_struttura_sportiva_mezzi <- "Meno di un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[2], ]$tempo_casa_struttura_sportiva_mezzi <- "Un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[3], ]$tempo_casa_struttura_sportiva_mezzi <- "Più di un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[4], ]$tempo_casa_struttura_sportiva_mezzi <- "Un'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[5], ]$tempo_casa_struttura_sportiva_mezzi <- "Più di un'ora"
+my_data$tempo_casa_struttura_sportiva_mezzi <- as.character(my_data$tempo_casa_struttura_sportiva_mezzi)
+table(my_data$tempo_casa_struttura_sportiva_mezzi, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$tempo_casa_struttura_sportiva_mezzi)))
+my_data[, 11] <- NULL
+```
+
+#distanza in km da casa alla struttura sportiva pù vicina
+```{r}
+colnames(my_data)[11] <- "km_casa_struttura_sportiva"
+my_data$km_casa_struttura_sportiva <- NULL
+```
+
+#distanza a piedi da scuola alla struttura sportiva più vicina
+```{r}
+my_data[, 11] <- as.character(my_data[, 11])
+unique(my_data[, 11])
+my_data$tempo_scuola_struttura_sportiva_piedi <- NA
+my_data[my_data[, 11] == unique(my_data[, 11])[1], ]$tempo_scuola_struttura_sportiva_piedi <- "Meno di un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[2], ]$tempo_scuola_struttura_sportiva_piedi <- "Un'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[3], ]$tempo_scuola_struttura_sportiva_piedi <- "Più di un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[4], ]$tempo_scuola_struttura_sportiva_piedi <- "Più di un'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[5], ]$tempo_scuola_struttura_sportiva_piedi <- "Un quarto d'ora"
+my_data$tempo_scuola_struttura_sportiva_piedi <- as.character(my_data$tempo_scuola_struttura_sportiva_piedi)
+table(my_data$tempo_scuola_struttura_sportiva_piedi, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$tempo_scuola_struttura_sportiva_piedi)))
+my_data[, 11] <- NULL
+```
+
+#distanza con i mezzi da scuola alla struttura sportiva più vicina
+```{r}
+my_data[, 11] <- as.character(my_data[, 11])
+unique(my_data[, 11])
+my_data$tempo_scuola_struttura_sportiva_mezzi <- NA
+my_data[my_data[, 11] == unique(my_data[, 11])[1], ]$tempo_scuola_struttura_sportiva_mezzi <- "Meno di un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[2], ]$tempo_scuola_struttura_sportiva_mezzi <- "Più di un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[3], ]$tempo_scuola_struttura_sportiva_mezzi <- "Un quarto d'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[4], ]$tempo_scuola_struttura_sportiva_mezzi <- "Più di un'ora"
+my_data[my_data[, 11] == unique(my_data[, 11])[5], ]$tempo_scuola_struttura_sportiva_mezzi <- "Un'ora"
+my_data$tempo_scuola_struttura_sportiva_mezzi <- as.character(my_data$tempo_scuola_struttura_sportiva_mezzi)
+table(my_data$tempo_scuola_struttura_sportiva_mezzi, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$tempo_scuola_struttura_sportiva_mezzi)))
+my_data[, 11] <- NULL
+```
+
+#distanza in km da scuola alla struttura sportiva pù vicina
+```{r}
+colnames(my_data)[11] <- "km_scuola_struttura_sportiva"
+my_data$km_scuola_struttura_sportiva <- NULL
+```
+
+#presenza di campioni sportivi
+```{r}
+colnames(my_data)[11] <- "presenza_campioni_sportivi_citta"
+my_data[!(my_data$presenza_campioni_sportivi_citta %in% c("No", "no", "")), ]$presenza_campioni_sportivi_citta <- "Si"
+my_data[my_data$X.9 != "", ]$presenza_campioni_sportivi_citta <- "No"
+my_data[my_data$presenza_campioni_sportivi_citta == unique(my_data$presenza_campioni_sportivi_citta)[3], ]$presenza_campioni_sportivi_citta <- "No"
+my_data$presenza_campioni_sportivi_citta <- as.factor(as.character(my_data$presenza_campioni_sportivi_citta))
+unique(my_data$presenza_campioni_sportivi_citta)
+table(my_data$presenza_campioni_sportivi_citta, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$presenza_campioni_sportivi_citta)))
+my_data$X.9 <- NULL
+```
+
+#flag sugli sport
+```{r}
+sport <- c("arrampicata", "arti_marziali", "atletica", "balli_da_sala", "baseball", "basket", "calcio", "canottaggio", "ciclismo", "danza_classica", "danza_contemporanea", "danza_moderna", "equitazione", "football_americano", "ginnastica_artistica", "ginnastica_ritmica", "golf", "hockey_su_ghiaccio", "hockey_su_prato", "nuoto", "nuoto_sincronizzato", "pallavolo", "pattinaggio_a_rotelle", "pattinaggio_su_ghiaccio", "ping_pong", "rugby", "scherma", "sci", "skateboard", "sport_da_combattimento", "tennis", "tiro_con_arco", "tuffi", "yoga", "altro_sport")
+
+for (i in 1:35) {
+  colnames(my_data)[i+11] <- sport[i]
+  my_data[, i+11] <- as.character(my_data[, i+11])
+  my_data[my_data[, i+11] == "", ][, i+11] <- "No"
+  my_data[!(my_data[, i+11] %in% c("", "No")), ][, i+11] <- "Si"
+  my_data[, i+11] <- as.factor(my_data[, i+11])
+}
+
+table(my_data[, 12], my_data$caso)
+```
+
+#sport più significativo
+```{r}
+my_data$Scrivi.il.nome.dello.sport.per.te.piÃ¹.significativo.tra.i.9.e.i.17.anni <- NULL
+```
+
+#agonismo
+```{r}
+my_data$agonismo <- NA
+my_data[my_data$Riguardo.al.tuo.sport..lo.hai.fatto.a.livello.agonistico. == "Si" | my_data$Riguardo.al.tuo.sport.piÃ¹.significativo..lo.hai.fatto.a.livello.agonistico. == "Si" | my_data$Riguardo.al.tuo.sport.piÃ¹.significativo..lo.hai.fatto.a.livello.agonistico..1 == "Si", ]$agonismo <- "Si"
+my_data[my_data$Riguardo.al.tuo.sport..lo.hai.fatto.a.livello.agonistico. == "No" | my_data$Riguardo.al.tuo.sport.piÃ¹.significativo..lo.hai.fatto.a.livello.agonistico. == "No" | my_data$Riguardo.al.tuo.sport.piÃ¹.significativo..lo.hai.fatto.a.livello.agonistico..1 == "No", ]$agonismo <- "No"
+unique(my_data$agonismo)
+table(my_data$agonismo, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$agonismo)))
+my_data$Riguardo.al.tuo.sport..lo.hai.fatto.a.livello.agonistico. <- NULL
+my_data$Riguardo.al.tuo.sport.piÃ¹.significativo..lo.hai.fatto.a.livello.agonistico. <- NULL
+my_data$Riguardo.al.tuo.sport.piÃ¹.significativo..lo.hai.fatto.a.livello.agonistico..1 <- NULL
+```
+
+#frequenza settimanale
+```{r}
+my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.prima.dei.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. <- as.character(my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.prima.dei.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi..)
+
+my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. <- as.character(my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi..)
+
+my_data$Quante.volte.alla.settimana.in.media.praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. <- as.character(my_data$Quante.volte.alla.settimana.in.media.praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi..)
+
+my_data$frequenza_settimanale <- NA
+
+my_data[my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.prima.dei.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "PiÃ¹ di tre" | my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "PiÃ¹ di tre" | my_data$Quante.volte.alla.settimana.in.media.praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "PiÃ¹ di tre", ]$frequenza_settimanale <- 4
+
+my_data[my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.prima.dei.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "3 volte" | my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "3 volte" | my_data$Quante.volte.alla.settimana.in.media.praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "3 volte", ]$frequenza_settimanale <- 3
+
+my_data[my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.prima.dei.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "2 volte" | my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "2 volte" | my_data$Quante.volte.alla.settimana.in.media.praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "2 volte", ]$frequenza_settimanale <- 2
+
+my_data[my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.prima.dei.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "1 volta" | my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "1 volta" | my_data$Quante.volte.alla.settimana.in.media.praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. == "1 volta", ]$frequenza_settimanale <- 1
+
+my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.prima.dei.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. <- NULL
+my_data$Quante.volte.alla.settimana..in.media..praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. <- NULL
+my_data$Quante.volte.alla.settimana.in.media.praticavi.il.tuo.sport.significativo.tra.i.9.e.i.17.anni..Considera.anche.le.partite..o.le.gare.o.i.saggi.. <- NULL
+
+my_data$frequenza_settimanale <- as.integer(my_data$frequenza_settimanale)
+unique(my_data$frequenza_settimanale)
+table(my_data$frequenza_settimanale, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$frequenza_settimanale)))
+```
+
+#età pensiero abbandono o abbandono
+```{r}
+my_data$A.quanti.anni.hai.abbandonato.lo.sport.per.te.piÃ¹.significativo. <- as.character(my_data$A.quanti.anni.hai.abbandonato.lo.sport.per.te.piÃ¹.significativo.)
+
+my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo. <- as.character(my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.)
+
+my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..1 <- as.character(my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..1)
+
+my_data$eta_pensiero_abbandono <- NA
+
+for (i in 9:17) {
+  if (i >= 9 & i <= 11) {
+    my_data[my_data$A.quanti.anni.hai.abbandonato.lo.sport.per.te.piÃ¹.significativo. == as.character(i) | my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..1 == as.character(i) | my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo. == as.character(i), ]$eta_pensiero_abbandono <- "Fascia 9-11 anni"
+  }
+  if (i >= 12 & i <= 14) {
+    my_data[my_data$A.quanti.anni.hai.abbandonato.lo.sport.per.te.piÃ¹.significativo. == as.character(i) | my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..1 == as.character(i) | my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo. == as.character(i), ]$eta_pensiero_abbandono <- "Fascia 12-14 anni"
+  }
+  if (i >= 15 & i <= 17) {
+    my_data[my_data$A.quanti.anni.hai.abbandonato.lo.sport.per.te.piÃ¹.significativo. == as.character(i) | my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..1 == as.character(i) | my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo. == as.character(i), ]$eta_pensiero_abbandono <- "Fascia 15-17 anni"
+  }
+}
+
+my_data$A.quanti.anni.hai.abbandonato.lo.sport.per.te.piÃ¹.significativo. <- NULL
+my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo. <- NULL
+my_data$A.quanti.anni.hai.pensato.seriamente.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..1 <- NULL
+
+my_data$eta_pensiero_abbandono <- as.character(my_data$eta_pensiero_abbandono)
+unique(my_data$eta_pensiero_abbandono)
+table(my_data$eta_pensiero_abbandono, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$eta_pensiero_abbandono)))
+```
+
+#stato d'animo per allenamento
+```{r}
+my_data$stato_animo_pre_allenamento <- NA
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..come.ti.sentivi.prima.di.andare.ad.allenarti. <- as.character(my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..come.ti.sentivi.prima.di.andare.ad.allenarti.)
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.come.ti.sentivi.prima.di.andare.ad.allenarti. <- as.character(my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.come.ti.sentivi.prima.di.andare.ad.allenarti.)
+
+my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..come.ti.sei.sentito.prima.di.andare.ad.allenarti. <- as.character(my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..come.ti.sei.sentito.prima.di.andare.ad.allenarti.)
+
+stato <- c("Demotivato", "Carico", "Svogliato", "Stanco", "Ansioso", "Felice", "Altro (specificare)")
+
+for (i in 1:7) {
+  my_data[my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..come.ti.sentivi.prima.di.andare.ad.allenarti. == stato[i] | my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.come.ti.sentivi.prima.di.andare.ad.allenarti. == stato[i] | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..come.ti.sei.sentito.prima.di.andare.ad.allenarti. == stato[i], ]$stato_animo_pre_allenamento <- stato[i]
+}
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..come.ti.sentivi.prima.di.andare.ad.allenarti. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.come.ti.sentivi.prima.di.andare.ad.allenarti. <- NULL
+my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..come.ti.sei.sentito.prima.di.andare.ad.allenarti. <- NULL
+my_data$X.44 <- NULL
+
+my_data$stato_animo_pre_allenamento <- as.factor(my_data$stato_animo_pre_allenamento)
+unique(my_data$stato_animo_pre_allenamento)
+table(my_data$stato_animo_pre_allenamento, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$stato_animo_pre_allenamento)))
+```
+
+#ore attivita extra
+```{r}
+my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... <- as.character(my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc...)
+
+my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... <- as.character(my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc...)
+
+my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 <- as.character(my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1)
+
+my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 <- as.character(my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1)
+
+my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....2 <- as.character(my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....2)
+
+my_data$ore_attivita_extra <- NA
+
+my_data[my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "Nessuna" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "Nessuna" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....2 == "Nessuna" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "Nessuna" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "Nessuna", ]$ore_attivita_extra <- 0
+
+my_data[my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "1 ora" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "1 ora" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....2 == "1 ora" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "1 ora" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "1 ora", ]$ore_attivita_extra <- 1
+
+my_data[my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "2 ore" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "2 ore" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....2 == "2 ore" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "2 ore" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "2 ore", ]$ore_attivita_extra <- 2
+
+my_data[my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "3 ore" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "3 ore" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....2 == "3 ore" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "3 ore" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "3 ore", ]$ore_attivita_extra <- 3
+
+my_data[my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "4 ore" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "4 ore" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....2 == "4 ore" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "4 ore" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "4 ore", ]$ore_attivita_extra <- 4
+
+my_data[my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "PiÃ¹ di 4" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "PiÃ¹ di 4" | my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....2 == "PiÃ¹ di 4" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 == "PiÃ¹ di 4" | my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... == "PiÃ¹ di 4", ]$ore_attivita_extra <- 5
+
+my_data$ore_attivita_extra <- as.integer(my_data$ore_attivita_extra)
+unique(my_data$ore_attivita_extra)
+table(my_data$ore_attivita_extra, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$ore_attivita_extra)))
+
+my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... <- NULL
+my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 <- NULL
+my_data$Nellâ..ultimo.mese..prima.di.abbandonare.il.tuo.sport..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....2 <- NULL
+my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc... <- NULL
+my_data$In.media..tra.i.tuoi.9.e.17.anni..quante.ore.alla.settimana.dedicavi.ad.attivitÃ..extra.scolastiche.e.o.extra.sportive..es..arte..social.network.ecc....1 <- NULL
+```
+
+#motivazioni per praticare sport significativo (31+2)
+```{r}
+motivazioni_si_sport <- c("divertimento", "bravura", "competizione", "nessun_infortunio", "fatica", "migliorare_abilita", "essere_piu_bravo_e_forte_degli_altri", "tenersi_in_forma", "vincere_trofei_raggiungere_alti_livelli", "brivido_vittoria", "battere_avversario", "scaricare_energia_tensione", "guadagnare_denaro_ottenere_contratti", "piacere", "religione", "esigenza", "passione", "appoggio_genitori", "accontentare_genitori", "volere_genitori", "rapporto_genitori_allenatore", "compagni_squadra", "allenamento_gruppo", "allenatore", "riuscire_conciliare_sport_studio", "trovare_tempo", "impianto_facile_raggiungere", "impianto_vicino_casa", "sport_no_costoso", "palestra_adeguata", "orari_comodi")
+
+my_data$moda <- as.character(my_data$X.61)
+my_data$accontentare_allenatore <- as.character(my_data$X.65)
+my_data$X.61 <- NULL 
+my_data$X.65 <- NULL
+
+for (i in 1:31) {
+  colnames(my_data)[i+46] <- motivazioni_si_sport[i]
+  my_data[, i+46] <- as.character(my_data[, i+46])
+  my_data[my_data[, i+46] == "", ][, i+46] <- "No"
+  my_data[my_data[, i+46] != "No", ][, i+46] <- "Si"
+  my_data[, i+46] <- as.factor(my_data[, i+46])
+}
+
+table(my_data[, 47], my_data$caso)
+
+my_data$X.77 <- NULL
+my_data$Tra.le.motivazioni.che.hai.scelto.scrivi.il.numero.di.quella.che.ha.maggiormente.determinato.la.tua.voglia.di.continuare <- NULL
+```
+
+#moda e accontentare allenatore
+```{r}
+for (i in 1:2750) {
+  if (my_data$moda[i] == "") {
+    my_data$moda[i] <- "No"
+  }
+  if (my_data$moda[i] != "No") {
+    my_data$moda[i] <- "Si"
+  }
+  if (my_data$accontentare_allenatore[i] == "") {
+    my_data$accontentare_allenatore[i] <- "No"
+  }
+  if (my_data$accontentare_allenatore[i] != "No") {
+    my_data$accontentare_allenatore[i] <- "Si"
+  }
+}
+
+table(my_data$moda, my_data$caso)
+table(my_data$accontentare_allenatore, my_data$caso)
+```
+
+#fattori per l'abbandono
+```{r}
+fattori_abbandono <- c("no_divertimento", "no_bravura", "troppa_competizione", "infortuni", "eccessiva_fatica", "incomprensioni_allenatore", "motivi_salute", "periodo_critico_personale", "troppo_impegnativo", "fattore_disabilita", "no_appoggio_genitori", "no_accompagnamento_genitori",  "rapporto_difficile_genitori_allenatore", "difficolta_compagni", "nessuno_con_cui_allenarsi", "lontananza", "male_scuola", "no_conciliare_scuola_sport", "altri_interessi", "difficolta_raggiungere_impianto", "sport_costoso", "no_palestra_adeguata", "materiale_carente", "orari_scomodi", "assenza_sport_vicino_casa")
+
+for (i in 1:25) {
+  colnames(my_data)[i+77] <- fattori_abbandono[i]
+  my_data[, i+77] <- as.character(my_data[, i+77])
+  my_data[my_data[, i+77] == "", ][, i+77] <- "No"
+  my_data[my_data[, i+77] != "No", ][, i+77] <- "Si"
+  my_data[, i+77] <- as.factor(my_data[, i+77])
+}
+
+table(my_data[, 78], my_data$caso)
+
+my_data$X.102 <- NULL
+my_data$Tra.le.motivazioni.che.hai.scelto.scriviÂ..il.numero.di.quella.che.maggiormente.ti.spingeva.ad.abbandonare <- NULL
+```
+
+#frequenza scuola giornaliera
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Frequentavi.la.scuolaâ.." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Frequentavi.la.scuolaâ...1" | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Frequentavi.la.scuolaâ..")
+
+my_data$frequenza_scuola_giornaliera <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Solo al mattino" | my_data[, q_index[2]] == "Solo al mattino" | my_data[, q_index[3]] == "Solo al mattino", ]$frequenza_scuola_giornaliera <- "Solo al mattino"
+
+my_data[my_data[, q_index[1]] == "Mattino e pomeriggio" | my_data[, q_index[2]] == "Mattino e pomeriggio" | my_data[, q_index[3]] == "Mattino e pomeriggio", ]$frequenza_scuola_giornaliera <- "Mattino e pomeriggio"
+
+my_data[my_data[, q_index[1]] == "Tutte le mattine e qualche pomeriggio" | my_data[, q_index[2]] == "Tutte le mattine e qualche pomeriggio" | my_data[, q_index[3]] == "Tutte le mattine e qualche pomeriggio", ]$frequenza_scuola_giornaliera <- "Tutte le mattine e qualche pomeriggio"
+
+my_data$frequenza_scuola_giornaliera <- as.character(my_data$frequenza_scuola_giornaliera)
+unique(my_data$frequenza_scuola_giornaliera)
+table(my_data$frequenza_scuola_giornaliera, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$frequenza_scuola_giornaliera)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Frequentavi.la.scuolaâ.. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Frequentavi.la.scuolaâ...1 <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Frequentavi.la.scuolaâ.. <- NULL
+```
+
+#grado conciliare scuola sport
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Â.Riuscivi.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo" | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...riuscivi.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo" | colnames(my_data)=="Tra.i.9.e.i.17.anniâ...Sei.in.media.sempre.riuscito.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo." | colnames(my_data)=="Tra.i.9.e.i.17.anniâ...Sei.in.media.sempre.riuscito.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo..1" | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...riuscivi.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo")
+
+my_data$grado_conciliare_scuola_sport <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "1. Completamente in disaccordo" | my_data[, q_index[2]] == "1. Completamente in disaccordo" | my_data[, q_index[3]] == "1. Completamente in disaccordo" | my_data[, q_index[4]] == "1. Completamente in disaccordo" | my_data[, q_index[5]] == "1. Completamente in disaccordo", ]$grado_conciliare_scuola_sport <- 1
+
+my_data[my_data[, q_index[1]] == "2. Abbastanza in disaccordo;" | my_data[, q_index[2]] == "2. Abbastanza in disaccordo" | my_data[, q_index[3]] == "2. Abbastanza in disaccordo" | my_data[, q_index[4]] == "2. Abbastanza in disaccordo" | my_data[, q_index[5]] == "2. Abbastanza in disaccordo", ]$grado_conciliare_scuola_sport <- 2
+
+my_data[my_data[, q_index[1]] == "3. NÃ© in disaccordo nÃ© in accordo;" | my_data[, q_index[2]] == "3. NÃ¨ in disaccordo nÃ¨ in accordo" | my_data[, q_index[3]] == "3. NÃ© in disaccordo nÃ© in accordo;" | my_data[, q_index[4]] == "3. NÃ¨ in disaccordo nÃ¨ in accordo" | my_data[, q_index[5]] == "3. NÃ© in disaccordo nÃ© in accordo", ]$grado_conciliare_scuola_sport <- 3
+
+my_data[my_data[, q_index[1]] == "4. Abbastanza d'accordo" | my_data[, q_index[2]] == "4. Abbastanza in accordo" | my_data[, q_index[3]] == "4. Abbastanza in accordo" | my_data[, q_index[4]] == "4. Abbastanza in accordo" | my_data[, q_index[5]] == "4. Abbastanza in accordo", ]$grado_conciliare_scuola_sport <- 4
+
+my_data[my_data[, q_index[1]] == "5. Completamente in accordo" | my_data[, q_index[2]] == "5. Completamente d'accordo" | my_data[, q_index[3]] == "5. Completamente in accordo" | my_data[, q_index[4]] == "5. Completamente d'accordo" | my_data[, q_index[5]] == "5. Completamente in accordo", ]$grado_conciliare_scuola_sport <- 5
+
+my_data$grado_conciliare_scuola_sport <- as.integer(my_data$grado_conciliare_scuola_sport)
+unique(my_data$grado_conciliare_scuola_sport)
+table(my_data$grado_conciliare_scuola_sport, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$grado_conciliare_scuola_sport)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Â.Riuscivi.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...riuscivi.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo <- NULL
+my_data$Tra.i.9.e.i.17.anniâ...Sei.in.media.sempre.riuscito.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo. <- NULL
+my_data$Tra.i.9.e.i.17.anniâ...Sei.in.media.sempre.riuscito.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo..1 <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...riuscivi.a.conciliare.lâ..impegno.scolastico.con.lâ..impegno.sportivo <- NULL
+```
+
+#ore studio giornaliere
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico." | colnames(my_data)=="Tra.i.9.e.i.17.anniâ..Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico." | colnames(my_data)=="Tra.i.9.e.i.17.anniâ..Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico..1" | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico.")
+
+my_data$ore_studio_giornaliere <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Nessuna" | my_data[, q_index[2]] == "Nessuna" | my_data[, q_index[3]] == "Nessuna" | my_data[, q_index[4]] == "Nessuna" | my_data[, q_index[5]] == "Nessuna", ]$ore_studio_giornaliere <- 0
+
+my_data[my_data[, q_index[1]] == "1 ora" | my_data[, q_index[2]] == "1 ora" | my_data[, q_index[3]] == "1 ora" | my_data[, q_index[4]] == "1 ora" | my_data[, q_index[5]] == "1 ora", ]$ore_studio_giornaliere <- 1
+
+my_data[my_data[, q_index[1]] == "2 ore" | my_data[, q_index[2]] == "2 ore" | my_data[, q_index[3]] == "2 ore" | my_data[, q_index[4]] == "2 ore" | my_data[, q_index[5]] == "2 ore", ]$ore_studio_giornaliere <- 2
+
+my_data[my_data[, q_index[1]] == "3 ore" | my_data[, q_index[2]] == "3 ore" | my_data[, q_index[3]] == "3 ore" | my_data[, q_index[4]] == "3 ore" | my_data[, q_index[5]] == "3 ore", ]$ore_studio_giornaliere <- 3
+
+my_data[my_data[, q_index[1]] == "4 ore" | my_data[, q_index[2]] == "4 ore" | my_data[, q_index[3]] == "4 ore" | my_data[, q_index[4]] == "4 ore" | my_data[, q_index[5]] == "4 ore", ]$ore_studio_giornaliere <- 4
+
+my_data[my_data[, q_index[1]] == "piÃ¹ di 4" | my_data[, q_index[2]] == "piÃ¹ di 4" | my_data[, q_index[3]] == "piÃ¹ di 4" | my_data[, q_index[4]] == "piÃ¹ di 4" | my_data[, q_index[5]] == "piÃ¹ di 4", ]$ore_studio_giornaliere <- 5
+
+my_data$ore_studio_giornaliere <- as.integer(my_data$ore_studio_giornaliere)
+unique(my_data$ore_studio_giornaliere)
+table(my_data$ore_studio_giornaliere, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$ore_studio_giornaliere)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico. <- NULL
+my_data$Tra.i.9.e.i.17.anniâ..Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico. <- NULL
+my_data$Tra.i.9.e.i.17.anniâ..Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico..1 <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Quante.ore.studiavi.in.media.al.giorno.al.di.fuori.dellâ..orario.scolastico. <- NULL
+```
+
+```{r}
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Il.tuo.allenatore.ha.influito.sulla.tua.scelta.di.continuarlo. <- NULL
+my_data$X.103 <- NULL
+```
+
+#societa e allenatore
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Ti.sentivi.parte.integrante.della.societÃ..sportiva.a.cui.appartenevi." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Ti.sentivi.parte.integrante.della.societÃ..sportiva.a.cui.appartenevi..1" | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Ti.sentivi.parte.integrante.della.societÃ..sportiva.a.cui.appartenevi.")
+
+my_data$integrazione_societa_sportiva <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "si" | my_data[, q_index[3]] == "Si", ]$integrazione_societa_sportiva <- "Si"
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "no" | my_data[, q_index[3]] == "No", ]$integrazione_societa_sportiva <- "No"
+
+my_data$integrazione_societa_sportiva <- as.factor(my_data$integrazione_societa_sportiva)
+unique(my_data$integrazione_societa_sportiva)
+table(my_data$integrazione_societa_sportiva, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$integrazione_societa_sportiva)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Ti.sentivi.parte.integrante.della.societÃ..sportiva.a.cui.appartenevi. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Ti.sentivi.parte.integrante.della.societÃ..sportiva.a.cui.appartenevi..1 <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Ti.sentivi.parte.integrante.della.societÃ..sportiva.a.cui.appartenevi. <- NULL
+```
+
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...il.tuo.allenatore.ti.dava.le.giuste.attenzioni.e.importanza..es..ti.seguiva.negli.esercizi.quando.avevi.bisogno." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...il.tuo.allenatore.ti.dava.le.giuste.attenzioni.e.importanza..es..ti.seguiva.negli.esercizi.quando.avevi.bisogno.." | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Il.tuo.allenatore.ti.dava.le.giuste.attenzioni.e.importanza..es..ti.seguiva.negli.esercizi.quando.avevi.bisogno..")
+
+my_data$attenzioni_allenatore <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "Si" | my_data[, q_index[3]] == "Si", ]$attenzioni_allenatore <- "Si"
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "no" | my_data[, q_index[3]] == "No", ]$attenzioni_allenatore <- "No"
+
+my_data$attenzioni_allenatore <- as.factor(my_data$attenzioni_allenatore)
+unique(my_data$attenzioni_allenatore)
+table(my_data$attenzioni_allenatore, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$attenzioni_allenatore)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...il.tuo.allenatore.ti.dava.le.giuste.attenzioni.e.importanza..es..ti.seguiva.negli.esercizi.quando.avevi.bisogno. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...il.tuo.allenatore.ti.dava.le.giuste.attenzioni.e.importanza..es..ti.seguiva.negli.esercizi.quando.avevi.bisogno.. <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Il.tuo.allenatore.ti.dava.le.giuste.attenzioni.e.importanza..es..ti.seguiva.negli.esercizi.quando.avevi.bisogno.. <- NULL
+```
+
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Il.tuo.allenatore.ti.incoraggiava.quando.perdevi.o.sbagliavi" | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Il.tuo.allenatore.ti.incoraggiava.quando.perdevi.o.sbagliavi." | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Il.tuo.allenatore.ti.incoraggiava.quando.perdevi.o.sbagliavi.")
+
+my_data$incoraggiamento_allenatore <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "Si" | my_data[, q_index[3]] == "Si", ]$incoraggiamento_allenatore <- "Si"
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "no" | my_data[, q_index[3]] == "No", ]$incoraggiamento_allenatore <- "No"
+
+my_data$incoraggiamento_allenatore <- as.factor(my_data$incoraggiamento_allenatore)
+unique(my_data$incoraggiamento_allenatore)
+table(my_data$incoraggiamento_allenatore, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$incoraggiamento_allenatore)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Il.tuo.allenatore.ti.incoraggiava.quando.perdevi.o.sbagliavi <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Il.tuo.allenatore.ti.incoraggiava.quando.perdevi.o.sbagliavi. <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Il.tuo.allenatore.ti.incoraggiava.quando.perdevi.o.sbagliavi. <- NULL
+```
+
+```{r}
+definizione_allenatore <- c("all_severo", "all_autorevole", "all_amico", "all_competente", "all_leader", "all_fissato", "all_riferimento", "all_non_in_grado", "all_avvilente", "all_irritabile", "all_motivatore", "all_no_preparato")
+
+for (i in 1:12) {
+  colnames(my_data)[i+102] <- definizione_allenatore[i]
+  my_data[, i+102] <- as.character(my_data[, i+102])
+  my_data[my_data[, i+102] == "", ][, i+102] <- "No"
+  my_data[my_data[, i+102] != "No", ][, i+102] <- "Si"
+  my_data[, i+102] <- as.factor(my_data[, i+102])
+}
+
+table(my_data[, 103], my_data$caso)
+my_data$X.115 <- NULL
+```
+
+#compagni di squadra
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Avevi.compagni.di.squadra.che.ti.stimolavano.a.impegnarti.in.allenamento.e.o.durante.le.gare.partite." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Avevi.compagni.di.squadra.che.ti.stimolavano.a.impegnarti.in.allenamento.e.o.durante.le.gare.partite..1" | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sportâ..Avevi.compagni.di.squadra.che.ti.stimolavano.a.impegnarti.in.allenamento.e.o.durante.le.gare.partite.")
+
+my_data$stimolo_compagni <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "Si" | my_data[, q_index[3]] == "Si", ]$stimolo_compagni <- "Si"
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "No" | my_data[, q_index[3]] == "No", ]$stimolo_compagni <- "No"
+
+my_data$stimolo_compagni <- as.factor(my_data$stimolo_compagni)
+unique(my_data$stimolo_compagni)
+table(my_data$stimolo_compagni, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$stimolo_compagni)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Avevi.compagni.di.squadra.che.ti.stimolavano.a.impegnarti.in.allenamento.e.o.durante.le.gare.partite. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Avevi.compagni.di.squadra.che.ti.stimolavano.a.impegnarti.in.allenamento.e.o.durante.le.gare.partite..1 <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sportâ..Avevi.compagni.di.squadra.che.ti.stimolavano.a.impegnarti.in.allenamento.e.o.durante.le.gare.partite. <- NULL
+```
+
+```{r}
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...I.tuoi.compagni.di.squadra.ti.hanno.influenzato.sulla.scelta.di.continuarlo. <- NULL
+my_data$X.116 <- NULL
+
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...I.tuoi.compagni.di.squadra.ogni.tanto.non.si.comportavano.bene.con.te..es..ti.prendevano.in.giro..non.ti.calcolavano.ecc.." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...I.tuoi.compagni.di.squadra.ogni.tanto.non.si.comportavano.bene.con.te..es..ti.prendevano.in.giro..non.ti.calcolavano.ecc...1" | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sportâ..I.tuoi.compagni.di.squadra.ogni.tanto.non.si.comportavano.bene.con.te..es..ti.prendevano.in.giro..non.ti.calcolavano.ecc..")
+
+my_data$problema_comportamento_compagni <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "Si" | my_data[, q_index[3]] == "Si", ]$problema_comportamento_compagni <- "Si"
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "No" | my_data[, q_index[3]] == "No", ]$problema_comportamento_compagni <- "No"
+
+my_data$problema_comportamento_compagni <- as.factor(my_data$problema_comportamento_compagni)
+unique(my_data$problema_comportamento_compagni)
+table(my_data$problema_comportamento_compagni, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$problema_comportamento_compagni)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...I.tuoi.compagni.di.squadra.ogni.tanto.non.si.comportavano.bene.con.te..es..ti.prendevano.in.giro..non.ti.calcolavano.ecc.. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...I.tuoi.compagni.di.squadra.ogni.tanto.non.si.comportavano.bene.con.te..es..ti.prendevano.in.giro..non.ti.calcolavano.ecc...1 <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sportâ..I.tuoi.compagni.di.squadra.ogni.tanto.non.si.comportavano.bene.con.te..es..ti.prendevano.in.giro..non.ti.calcolavano.ecc.. <- NULL
+```
+
+#genitori
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Tua.mamma.lavorava." | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anni...Tua.mamma.lavorava." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..tua.mamma.lavorava." | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anniâ...tua.mamma.lavorava." | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Tua.mamma.lavorava.")
+
+my_data$flag_lavoro_madre <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "Si" | my_data[, q_index[3]] == "Si" | my_data[, q_index[4]] == "Si" | my_data[, q_index[5]] == "Si", ]$flag_lavoro_madre <- "Si"
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "No" | my_data[, q_index[3]] == "No" | my_data[, q_index[4]] == "No" | my_data[, q_index[5]] == "No", ]$flag_lavoro_madre <- "No"
+
+my_data$flag_lavoro_madre <- as.factor(my_data$flag_lavoro_madre)
+unique(my_data$flag_lavoro_madre)
+table(my_data$flag_lavoro_madre, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$flag_lavoro_madre)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Tua.mamma.lavorava. <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anni...Tua.mamma.lavorava. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..tua.mamma.lavorava. <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anniâ...tua.mamma.lavorava. <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Tua.mamma.lavorava. <- NULL
+```
+
+#lavoro madre
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Che.professione.svolgeva.tua.mamma." | colnames(my_data)=="Tra.i.tuoi.9.e.17.anni...Che.professione.svolgeva.tua.mamma." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Che.professione.svolgeva.tua.mamma..1" | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anniâ...Che.professione.svolgeva.tua.mamma." | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Che.professione.svolgeva.tua.mamma.")
+
+my_data$lavoro_madre <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)" | my_data[, q_index[2]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)" | my_data[, q_index[3]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)" | my_data[, q_index[4]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)" | my_data[, q_index[5]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)", ]$lavoro_madre <- "Libera professionista"
+
+my_data[my_data[, q_index[1]] == "Casalinga" | my_data[, q_index[2]] == "Casalinga" | my_data[, q_index[3]] == "Casalinga" | my_data[, q_index[4]] == "Casalinga" | my_data[, q_index[5]] == "Casalinga", ]$lavoro_madre <- "Casalinga"
+
+my_data[my_data[, q_index[1]] == "Impiegata" | my_data[, q_index[2]] == "Impiegata" | my_data[, q_index[3]] == "Impiegata" | my_data[, q_index[4]] == "Impiegata" | my_data[, q_index[5]] == "Impiegata", ]$lavoro_madre <- "Impiegata"
+
+my_data[my_data[, q_index[1]] == "Operaia" | my_data[, q_index[2]] == "Operaia" | my_data[, q_index[3]] == "Operaia" | my_data[, q_index[4]] == "Operaia" | my_data[, q_index[5]] == "Operaia", ]$lavoro_madre <- "Operaia"
+
+my_data[my_data[, q_index[1]] == "Altro (specificare)" | my_data[, q_index[2]] == "Altro (specificare)" | my_data[, q_index[3]] == "Altro (specificare)" | my_data[, q_index[4]] == "Altro (specificare)" | my_data[, q_index[5]] == "Altro (specificare)", ]$lavoro_madre <- "Altro"
+
+my_data[my_data[, q_index[1]] == "Docente" | my_data[, q_index[2]] == "Docente" | my_data[, q_index[3]] == "Docente" | my_data[, q_index[4]] == "Docente" | my_data[, q_index[5]] == "Docente", ]$lavoro_madre <- "Docente"
+
+my_data[my_data[, q_index[1]] == "Commerciante/Imprenditrice/Artigiana" | my_data[, q_index[2]] == "Commerciante/Imprenditrice/Artigiana" | my_data[, q_index[3]] == "Commerciante/Imprenditrice/Artigiana" | my_data[, q_index[4]] == "Commerciante/Imprenditrice/Artigiana" | my_data[, q_index[5]] == "Commerciante/Imprenditrice/Artigiana", ]$lavoro_madre <- "Commerciante/Imprenditrice/Artigiana"
+
+my_data$lavoro_madre <- as.factor(my_data$lavoro_madre)
+unique(my_data$lavoro_madre)
+table(my_data$lavoro_madre, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$lavoro_madre)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Che.professione.svolgeva.tua.mamma. <- NULL
+my_data$Tra.i.tuoi.9.e.17.anni...Che.professione.svolgeva.tua.mamma. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Che.professione.svolgeva.tua.mamma..1 <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anniâ...Che.professione.svolgeva.tua.mamma. <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Che.professione.svolgeva.tua.mamma. <- NULL
+```
+
+#impegno lavoro madre
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Tua.mamma.era.impegnata.per.lavoroâ.." | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anni...Tua.mamma.era.impegnata.per.lavoro..." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Tua.mamma.era.impegnata.per.lavoroâ.." | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anniâ...Tua.mamma.era.impegnata.per.lavoroâ.." | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Tua.mamma.era.impegnata.per.lavoro...")
+
+my_data$impegno_lavoro_madre <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Part time" | my_data[, q_index[2]] == "Part time" | my_data[, q_index[3]] == "Part time" | my_data[, q_index[4]] == "Part time" | my_data[, q_index[5]] == "Part time", ]$impegno_lavoro_madre <- "Part time"
+
+my_data[my_data[, q_index[1]] == "Full time" | my_data[, q_index[2]] == "Full time" | my_data[, q_index[3]] == "Full time" | my_data[, q_index[4]] == "Full time" | my_data[, q_index[5]] == "Full time", ]$impegno_lavoro_madre <- "Full time"
+
+my_data[my_data[, q_index[1]] == "Si gestiva autonomamente" | my_data[, q_index[2]] == "Si gestiva autonomamente" | my_data[, q_index[3]] == "Si gestiva autonomamente" | my_data[, q_index[4]] == "Si gestiva autonomamente" | my_data[, q_index[5]] == "Si gestiva autonomamente", ]$impegno_lavoro_madre <- "Autonomo"
+
+my_data[my_data[, q_index[1]] == "Altro (specificare)" | my_data[, q_index[2]] == "Altro (specificare)" | my_data[, q_index[3]] == "Altro (specificare)" | my_data[, q_index[4]] == "Altro (specificare)" | my_data[, q_index[5]] == "Altro (specificare)", ]$impegno_lavoro_madre <- "Altro"
+
+my_data$impegno_lavoro_madre <- as.factor(my_data$impegno_lavoro_madre)
+unique(my_data$impegno_lavoro_madre)
+table(my_data$impegno_lavoro_madre, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$impegno_lavoro_madre)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Tua.mamma.era.impegnata.per.lavoroâ.. <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anni...Tua.mamma.era.impegnata.per.lavoro... <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Tua.mamma.era.impegnata.per.lavoroâ.. <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anniâ...Tua.mamma.era.impegnata.per.lavoroâ.. <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Tua.mamma.era.impegnata.per.lavoro... <- NULL
+```
+
+```{r}
+my_data$X.118 <- NULL
+my_data$X.119 <- NULL
+my_data$X.120 <- NULL
+
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Tuo.papÃ..lavorava." | colnames(my_data)=="Tra.i.tuoi.9.e.17.anni...Tuo.papÃ..lavorava." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Tuo.papÃ..lavorava." | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anniâ...Tuo.papÃ..lavorava." | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Tuo.papÃ..lavorava.")
+
+my_data$flag_lavoro_padre <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "Si" | my_data[, q_index[3]] == "Si" | my_data[, q_index[4]] == "Si" | my_data[, q_index[5]] == "Si", ]$flag_lavoro_padre <- "Si"
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "No" | my_data[, q_index[3]] == "No" | my_data[, q_index[4]] == "No" | my_data[, q_index[5]] == "No", ]$flag_lavoro_padre <- "No"
+
+my_data$flag_lavoro_padre <- as.factor(my_data$flag_lavoro_padre)
+unique(my_data$flag_lavoro_padre)
+table(my_data$flag_lavoro_padre, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$flag_lavoro_padre)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Tuo.papÃ..lavorava. <- NULL
+my_data$Tra.i.tuoi.9.e.17.anni...Tuo.papÃ..lavorava. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Tuo.papÃ..lavorava. <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anniâ...Tuo.papÃ..lavorava. <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Tuo.papÃ..lavorava. <- NULL
+```
+
+#lavoro padre
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Che.professione.svolgeva.tuo.papÃ.." | colnames(my_data)=="Tra.i.tuoi.9.e.17.anni...Che.professione.svolgeva.tuo.papÃ.." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Che.professione.svolgeva.tuo.papÃ.." | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anniâ...Che.professione.svolgeva.tuo.papÃ.." | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Che.professione.svolgeva.tuo.papÃ..")
+
+my_data$lavoro_padre <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)" | my_data[, q_index[2]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)" | my_data[, q_index[3]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)" | my_data[, q_index[4]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)" | my_data[, q_index[5]] == "Libera professione (avvocato, medico, commercialista, artista, carriera sportiva ecc.)", ]$lavoro_padre <- "Libero professionista"
+
+my_data[my_data[, q_index[1]] == "Casalingo" | my_data[, q_index[2]] == "Casalingo" | my_data[, q_index[3]] == "Casalingo" | my_data[, q_index[4]] == "Casalingo" | my_data[, q_index[5]] == "Casalingo", ]$lavoro_padre <- "Casalingo"
+
+my_data[my_data[, q_index[1]] == "Impiegato" | my_data[, q_index[2]] == "Impiegato" | my_data[, q_index[3]] == "Impiegato" | my_data[, q_index[4]] == "Impiegato" | my_data[, q_index[5]] == "Impiegato", ]$lavoro_padre <- "Impiegato"
+
+my_data[my_data[, q_index[1]] == "Operaio" | my_data[, q_index[2]] == "Operaio" | my_data[, q_index[3]] == "Operaio" | my_data[, q_index[4]] == "Operaio" | my_data[, q_index[5]] == "Operaio", ]$lavoro_padre <- "Operaio"
+
+my_data[my_data[, q_index[1]] == "Altro (specificare)" | my_data[, q_index[2]] == "Altro (specificare)" | my_data[, q_index[3]] == "Altro (specificare)" | my_data[, q_index[4]] == "Altro (specificare)" | my_data[, q_index[5]] == "Altro (specificare)", ]$lavoro_padre <- "Altro"
+
+my_data[my_data[, q_index[1]] == "Docente" | my_data[, q_index[2]] == "Docente" | my_data[, q_index[3]] == "Docente" | my_data[, q_index[4]] == "Docente" | my_data[, q_index[5]] == "Docente", ]$lavoro_padre <- "Docente"
+
+my_data[my_data[, q_index[1]] == "Commerciante/Imprenditore/Artigiano" | my_data[, q_index[2]] == "Commerciante/Imprenditore/Artigiano" | my_data[, q_index[3]] == "Commerciante/Imprenditore/Artigiano" | my_data[, q_index[4]] == "Commerciante/Imprenditore/Artigiano" | my_data[, q_index[5]] == "Commerciante/Imprenditore/Artigiano", ]$lavoro_padre <- "Commerciante/Imprenditore/Artigiano"
+
+my_data$lavoro_padre <- as.factor(my_data$lavoro_padre)
+unique(my_data$lavoro_padre)
+table(my_data$lavoro_padre, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$lavoro_padre)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Che.professione.svolgeva.tuo.papÃ.. <- NULL
+my_data$Tra.i.tuoi.9.e.17.anni...Che.professione.svolgeva.tuo.papÃ.. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Che.professione.svolgeva.tuo.papÃ.. <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anniâ...Che.professione.svolgeva.tuo.papÃ.. <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Che.professione.svolgeva.tuo.papÃ.. <- NULL
+```
+
+#impegno lavoro padre
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Tuo.papÃ..era.impegnato.per.lavoroâ.." | colnames(my_data)=="Tra.i.tuoi.9.e.17.anni...Tuo.papÃ..era.impegnato.per.lavoro..." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Tuo.papÃ..era.impegnato.per.lavoroâ.." | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anniâ...Tuo.papÃ..era.impegnato.per.lavoroâ.." | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Tuo.papÃ..era.impegnato.per.lavoro...")
+
+my_data$impegno_lavoro_padre <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Part time" | my_data[, q_index[2]] == "Part time" | my_data[, q_index[3]] == "Part time" | my_data[, q_index[4]] == "Part time" | my_data[, q_index[5]] == "Part time", ]$impegno_lavoro_padre <- "Part time"
+
+my_data[my_data[, q_index[1]] == "Full time" | my_data[, q_index[2]] == "Full time" | my_data[, q_index[3]] == "Full time" | my_data[, q_index[4]] == "Full time" | my_data[, q_index[5]] == "Full time", ]$impegno_lavoro_padre <- "Full time"
+
+my_data[my_data[, q_index[1]] == "Si gestiva autonomamente" | my_data[, q_index[2]] == "Si gestiva autonomamente" | my_data[, q_index[3]] == "Si gestiva autonomamente" | my_data[, q_index[4]] == "Si gestiva autonomamente" | my_data[, q_index[5]] == "Si gestiva autonomamente", ]$impegno_lavoro_padre <- "Autonomo"
+
+my_data[my_data[, q_index[1]] == "Altro (specificare)" | my_data[, q_index[2]] == "Altro (specificare)" | my_data[, q_index[3]] == "Altro (specificare)" | my_data[, q_index[4]] == "Altro (specificare)" | my_data[, q_index[5]] == "Altro (specificare)", ]$impegno_lavoro_padre <- "Altro"
+
+my_data$impegno_lavoro_padre <- as.factor(my_data$impegno_lavoro_padre)
+unique(my_data$impegno_lavoro_padre)
+table(my_data$impegno_lavoro_padre, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$impegno_lavoro_padre)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Tuo.papÃ..era.impegnato.per.lavoroâ.. <- NULL
+my_data$Tra.i.tuoi.9.e.17.anni...Tuo.papÃ..era.impegnato.per.lavoro... <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Tuo.papÃ..era.impegnato.per.lavoroâ.. <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anniâ...Tuo.papÃ..era.impegnato.per.lavoroâ.. <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...Tuo.papÃ..era.impegnato.per.lavoro... <- NULL
+```
+
+#numero fratelli stesso sport
+```{r}
+q_index <- which(colnames(my_data)=="Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport.significativo." | colnames(my_data)=="Tra.i.tuoi.9.e.17.anni...Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport.significativo." | colnames(my_data)=="Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport.significativo..1" | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anniâ...Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport.significativo." | colnames(my_data)=="Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport..che.poi.hai.abbandonato..")
+
+my_data$numero_fratelli_stesso_sport <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Nessuno" | my_data[, q_index[2]] == "Nessuno" | my_data[, q_index[3]] == "Nessuno" | my_data[, q_index[4]] == "Nessuno" | my_data[, q_index[5]] == "Nessuno", ]$numero_fratelli_stesso_sport <- 0
+
+my_data[my_data[, q_index[1]] == "1" | my_data[, q_index[2]] == "1" | my_data[, q_index[3]] == "1" | my_data[, q_index[4]] == "1" | my_data[, q_index[5]] == "1", ]$numero_fratelli_stesso_sport <- 1
+
+my_data[my_data[, q_index[1]] == "2" | my_data[, q_index[2]] == "2" | my_data[, q_index[3]] == "2" | my_data[, q_index[4]] == "2" | my_data[, q_index[5]] == "2", ]$numero_fratelli_stesso_sport <- 2
+
+my_data[my_data[, q_index[1]] == "3" | my_data[, q_index[2]] == "3" | my_data[, q_index[3]] == "3" | my_data[, q_index[4]] == "3" | my_data[, q_index[5]] == "3", ]$numero_fratelli_stesso_sport <- 3
+
+my_data[my_data[, q_index[1]] == "PiÃ¹ di tre" | my_data[, q_index[2]] == "PiÃ¹ di tre" | my_data[, q_index[3]] == "PiÃ¹ di tre" | my_data[, q_index[4]] == "PiÃ¹ di tre" | my_data[, q_index[5]] == "PiÃ¹ di tre", ]$numero_fratelli_stesso_sport <- 4
+
+my_data$numero_fratelli_stesso_sport <- as.integer(my_data$numero_fratelli_stesso_sport)
+unique(my_data$numero_fratelli_stesso_sport)
+table(my_data$numero_fratelli_stesso_sport, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$numero_fratelli_stesso_sport)))
+
+my_data$Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport.significativo. <- NULL
+my_data$Tra.i.tuoi.9.e.17.anni...Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport.significativo. <- NULL
+my_data$Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport.significativo..1 <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anniâ...Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport.significativo. <- NULL
+my_data$Quanti.dei.tuoi.fratelli.hanno.fatto.il.tuo.stesso.sport..che.poi.hai.abbandonato.. <- NULL
+```
+
+#influenza scelta sport
+```{r}
+my_data$X.121 <- NULL
+
+q_index <- which(colnames(my_data)=="Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.del.tuo.sport.significativo." | colnames(my_data)=="Tra.i.tuoi.9.e.17.anni....Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.del.tuo.sport.significativo." | colnames(my_data)=="Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.dello.tuo.sport.significativo." | colnames(my_data)=="Tra.i.tuoi.9.e.i.17.anniâ...Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.del.tuo.sport.significativo." | colnames(my_data)=="Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.dello.sport..che.poi.hai.abbandonato..")
+
+my_data$influenza_scelta_sport <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Amici" | my_data[, q_index[2]] == "Amici" | my_data[, q_index[3]] == "Amici" | my_data[, q_index[4]] == "Amici" | my_data[, q_index[5]] == "Amici", ]$influenza_scelta_sport <- "Amici"
+
+my_data[my_data[, q_index[1]] == "Nessuno" | my_data[, q_index[2]] == "Nessuno" | my_data[, q_index[3]] == "Nessuno" | my_data[, q_index[4]] == "Nessuno" | my_data[, q_index[5]] == "Nessuno", ]$influenza_scelta_sport <- "Nessuno"
+
+my_data[my_data[, q_index[1]] == "Qualcun'altro (specificare)" | my_data[, q_index[2]] == "Qualcun altro (specificare)" | my_data[, q_index[3]] == "Qualcun' altro (specificare)" | my_data[, q_index[4]] == "Qualcun' altro (specificare)" | my_data[, q_index[5]] == "Qualcun altro (specificare)", ]$influenza_scelta_sport <- "Altro"
+
+my_data[my_data[, q_index[1]] == "Genitori" | my_data[, q_index[2]] == "Genitori" | my_data[, q_index[3]] == "Genitori" | my_data[, q_index[4]] == "Genitori" | my_data[, q_index[5]] == "Genitori", ]$influenza_scelta_sport <- "Genitori"
+
+my_data[my_data[, q_index[1]] == "Fratelli/ sorelle" | my_data[, q_index[2]] == "Fratelli/sorelle" | my_data[, q_index[3]] == "Fratelli/sorelle" | my_data[, q_index[4]] == "Fratelli/sorelle" | my_data[, q_index[5]] == "Fratelli/sorelle", ]$influenza_scelta_sport <- "Fratelli/sorelle"
+
+my_data$influenza_scelta_sport <- as.factor(my_data$influenza_scelta_sport)
+unique(my_data$influenza_scelta_sport)
+table(my_data$influenza_scelta_sport, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$influenza_scelta_sport)))
+
+my_data$Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.del.tuo.sport.significativo. <- NULL
+my_data$Tra.i.tuoi.9.e.17.anni....Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.del.tuo.sport.significativo. <- NULL
+my_data$Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.dello.tuo.sport.significativo. <- NULL
+my_data$Tra.i.tuoi.9.e.i.17.anniâ...Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.del.tuo.sport.significativo. <- NULL
+my_data$Chi.ti.ha.influenzato.in.modo.determinante.nella.scelta.dello.sport..che.poi.hai.abbandonato.. <- NULL
+```
+
+#sport agonistico genitori
+```{r}
+q_index <- which(colnames(my_data)=="Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.il.tuo.sport.significativoÂ..puoi.rispondere.a.piÃ¹.di.unâ..opzione." | colnames(my_data)=="Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.il.tuo.sport.significativo..puoi.rispondere.a.piÃ¹.di.unâ..opzione.." | colnames(my_data)=="Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.lo.sport.che.hai.abbandonato..puoi.rispondere.a.piÃ¹.di.unâ..opzione." | colnames(my_data)=="Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.il.tuo.sport.significativo." | colnames(my_data)=="Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.il.tuo.sport.significativo..1")
+
+my_data$sport_agonistico_genitori <- "No"
+vals1 <- sort(unique(my_data[, q_index[1]]))[-1]
+vals2 <- sort(unique(my_data[, q_index[2]]))[-1]
+vals3 <- sort(unique(my_data[, q_index[3]]))[-1]
+vals4 <- sort(unique(my_data[, q_index[4]]))[-1]
+vals5 <- sort(unique(my_data[, q_index[5]]))[-1]
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] %in% vals1 | my_data[, q_index[2]] %in% vals2 | my_data[, q_index[3]] %in% vals3 | my_data[, q_index[4]] %in% vals4 | my_data[, q_index[5]] %in% vals5, ]$sport_agonistico_genitori <- "Si"
+
+my_data$sport_agonistico_genitori <- as.factor(my_data$sport_agonistico_genitori)
+unique(my_data$sport_agonistico_genitori)
+table(my_data$sport_agonistico_genitori, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$sport_agonistico_genitori)))
+
+my_data$Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.il.tuo.sport.significativoÂ..puoi.rispondere.a.piÃ¹.di.unâ..opzione. <- NULL
+my_data$Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.il.tuo.sport.significativo..puoi.rispondere.a.piÃ¹.di.unâ..opzione.. <- NULL
+my_data$Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.lo.sport.che.hai.abbandonato..puoi.rispondere.a.piÃ¹.di.unâ..opzione. <- NULL
+my_data$Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.il.tuo.sport.significativo. <- NULL
+my_data$Almeno.uno.dei.tuoi.genitori.ha.praticato.nella.sua.vita.il.tuo.sport.significativo..1 <- NULL
+```
+
+#sport svago genitori
+```{r}
+q_index <- which(colnames(my_data)=="X.122" | colnames(my_data)=="X.178" | colnames(my_data)=="X.270" | colnames(my_data)=="X.326" | colnames(my_data)=="X.418")
+
+my_data$sport_svago_genitori <- "No"
+vals1 <- sort(unique(my_data[, q_index[1]]))[-1]
+vals2 <- sort(unique(my_data[, q_index[2]]))[-1]
+vals3 <- sort(unique(my_data[, q_index[3]]))[-1]
+vals4 <- sort(unique(my_data[, q_index[4]]))[-1]
+vals5 <- sort(unique(my_data[, q_index[5]]))[-1]
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] %in% vals1 | my_data[, q_index[2]] %in% vals2 | my_data[, q_index[3]] %in% vals3 | my_data[, q_index[4]] %in% vals4 | my_data[, q_index[5]] %in% vals5, ]$sport_svago_genitori <- "Si"
+
+my_data$sport_svago_genitori <- as.factor(my_data$sport_svago_genitori)
+unique(my_data$sport_svago_genitori)
+table(my_data$sport_svago_genitori, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$sport_svago_genitori)))
+
+my_data$X.122 <- NULL
+my_data$X.178 <- NULL
+my_data$X.270 <- NULL
+my_data$X.326 <- NULL
+my_data$X.418 <- NULL
+```
+
+#no sport genitori
+```{r}
+q_index <- which(colnames(my_data)=="X.123" | colnames(my_data)=="X.179" | colnames(my_data)=="X.271" | colnames(my_data)=="X.327" | colnames(my_data)=="X.419")
+
+my_data$sport_no_genitori <- "No"
+vals1 <- sort(unique(my_data[, q_index[1]]))[-1]
+vals2 <- sort(unique(my_data[, q_index[2]]))[-1]
+vals3 <- sort(unique(my_data[, q_index[3]]))[-1]
+vals4 <- sort(unique(my_data[, q_index[4]]))[-1]
+vals5 <- sort(unique(my_data[, q_index[5]]))[-1]
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] %in% vals1 | my_data[, q_index[2]] %in% vals2 | my_data[, q_index[3]] %in% vals3 | my_data[, q_index[4]] %in% vals4 | my_data[, q_index[5]] %in% vals5, ]$sport_no_genitori <- "Si"
+
+my_data$sport_no_genitori <- as.factor(my_data$sport_no_genitori)
+unique(my_data$sport_no_genitori)
+table(my_data$sport_no_genitori, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$sport_no_genitori)))
+
+my_data$X.123 <- NULL
+my_data$X.179 <- NULL
+my_data$X.271 <- NULL
+my_data$X.327 <- NULL
+my_data$X.419 <- NULL
+```
+
+#non si sa sport genitori
+```{r}
+q_index <- which(colnames(my_data)=="X.124" | colnames(my_data)=="X.180" | colnames(my_data)=="X.272" | colnames(my_data)=="X.328" | colnames(my_data)=="X.420")
+
+my_data$sport_sconosciuto_genitori <- "No"
+vals1 <- sort(unique(my_data[, q_index[1]]))[-1]
+vals2 <- sort(unique(my_data[, q_index[2]]))[-1]
+vals3 <- sort(unique(my_data[, q_index[3]]))[-1]
+vals4 <- sort(unique(my_data[, q_index[4]]))[-1]
+vals5 <- sort(unique(my_data[, q_index[5]]))[-1]
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] %in% vals1 | my_data[, q_index[2]] %in% vals2 | my_data[, q_index[3]] %in% vals3 | my_data[, q_index[4]] %in% vals4 | my_data[, q_index[5]] %in% vals5, ]$sport_sconosciuto_genitori <- "Si"
+
+my_data$sport_sconosciuto_genitori <- as.factor(my_data$sport_sconosciuto_genitori)
+unique(my_data$sport_sconosciuto_genitori)
+table(my_data$sport_sconosciuto_genitori, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$sport_sconosciuto_genitori)))
+
+my_data$X.124 <- NULL
+my_data$X.180 <- NULL
+my_data$X.272 <- NULL
+my_data$X.328 <- NULL
+my_data$X.420 <- NULL
+```
+
+#disponibilita accompagnamento genitori
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.....I.tuoi.genitori..o.uno.di.essi..ti.portavano.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.del.tuo.sport.significativo" | colnames(my_data)=="Tra.i.tuoi.9.e.17.anniâ..I.tuoi.genitori..o.uno.di.essi..in.media.ti.hanno.portato.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.del.tuo.sport.significativo" | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...I.tuoi.genitori..o.uno.di.essi..ti.portavano.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.del.tuo.sport.significativo." | colnames(my_data)=="Prima.dei.17.anniâ...I.tuoi.genitori..o.uno.di.essi..in.media.ti.hanno.portato.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.del.tuo.sport.significativo." | colnames(my_data)=="Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...I.tuoi.genitori..o.uno.di.essi..ti.portavano.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.dello.sport.che.poi.hai.abbandonato.")
+
+my_data$disponibilita_accompagnamento_genitori <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "No" | my_data[, q_index[3]] == "No" | my_data[, q_index[4]] == "no" | my_data[, q_index[5]] == "No" , ]$disponibilita_accompagnamento_genitori <- "No"
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "Si" | my_data[, q_index[3]] == "Si" | my_data[, q_index[4]] == "Si" | my_data[, q_index[5]] == "Si" , ]$disponibilita_accompagnamento_genitori <- "Si"
+
+my_data$disponibilita_accompagnamento_genitori <- as.factor(my_data$disponibilita_accompagnamento_genitori)
+unique(my_data$disponibilita_accompagnamento_genitori)
+table(my_data$disponibilita_accompagnamento_genitori, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$disponibilita_accompagnamento_genitori)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.....I.tuoi.genitori..o.uno.di.essi..ti.portavano.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.del.tuo.sport.significativo <- NULL
+my_data$Tra.i.tuoi.9.e.17.anniâ..I.tuoi.genitori..o.uno.di.essi..in.media.ti.hanno.portato.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.del.tuo.sport.significativo <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...I.tuoi.genitori..o.uno.di.essi..ti.portavano.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.del.tuo.sport.significativo. <- NULL
+my_data$Prima.dei.17.anniâ...I.tuoi.genitori..o.uno.di.essi..in.media.ti.hanno.portato.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.del.tuo.sport.significativo. <- NULL
+my_data$Gli.ultimi.mesi.prima.di.abbandonare.il.tuo.sport.significativo.â...I.tuoi.genitori..o.uno.di.essi..ti.portavano.la.maggior.parte.delle.volte..es..2.volte.su.3..agli.allenamenti.dello.sport.che.poi.hai.abbandonato. <- NULL
+```
+
+#obbligo genitori
+```{r}
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...I.tuoi.genitori..o.uno.di.essi..ti.hanno.spinto.a.continuare.a.fare.proprio.quello.sport <- NULL
+
+q_index <- which(colnames(my_data)=="Tra.i.tuoi.9.e.17.anniâ...Quando.non.avevi.voglia.di.andare.ad.allenarti.nel.tuo.sport..i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare" | colnames(my_data)=="Tra.i.tuoi.9.e.17.anniâ..Quando.non.avevi.voglia.di.andare.ad.allenarti..i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare" | colnames(my_data)=="Tra.i.tuoi.9.e.17.anniâ...Quando.non.avevi.voglia.di.andare.ad.allenarti.nel.tuo.sport.significativo..i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare." | colnames(my_data)=="Prima.dei.17.anniâ...Quando.non.avevi.voglia.di.andare.ad.allenarti..nel.tuo.sport.significativo...i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare." | colnames(my_data)=="Quando.non.avevi.voglia.di.andare.ad.allenarti.nel.tuo.sport.significativo..i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare.")
+
+my_data$obbligo_genitori <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "No" | my_data[, q_index[3]] == "No" | my_data[, q_index[4]] == "no" | my_data[, q_index[5]] == "No" , ]$obbligo_genitori <- "No"
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "Si" | my_data[, q_index[3]] == "Si" | my_data[, q_index[4]] == "Si" | my_data[, q_index[5]] == "Si" , ]$obbligo_genitori <- "Si"
+
+my_data$obbligo_genitori <- as.factor(my_data$obbligo_genitori)
+unique(my_data$obbligo_genitori)
+table(my_data$obbligo_genitori, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$obbligo_genitori)))
+
+my_data$Tra.i.tuoi.9.e.17.anniâ...Quando.non.avevi.voglia.di.andare.ad.allenarti.nel.tuo.sport..i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare <- NULL
+my_data$Tra.i.tuoi.9.e.17.anniâ..Quando.non.avevi.voglia.di.andare.ad.allenarti..i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare <- NULL
+my_data$Tra.i.tuoi.9.e.17.anniâ...Quando.non.avevi.voglia.di.andare.ad.allenarti.nel.tuo.sport.significativo..i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare. <- NULL
+my_data$Prima.dei.17.anniâ...Quando.non.avevi.voglia.di.andare.ad.allenarti..nel.tuo.sport.significativo...i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare. <- NULL
+my_data$Quando.non.avevi.voglia.di.andare.ad.allenarti.nel.tuo.sport.significativo..i.tuoi.genitori..o.uno.di.essi..ti.convincevano.o.obbligavano.ad.andare. <- NULL
+```
+
+#definizione genitore
+```{r}
+q_index <- which(colnames(my_data)=="Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nello.sport.per.te.piÃ¹.significativo.e.rispondi.Lui.lei..rispetto.al.tuo.sport..lo.definirestiâ.." | colnames(my_data)=="Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nel.tuo.sport.e.rispondi.Il.piÃ¹.influente.tra.i.tuoi.genitori..rispetto.al.tuo.sport..lo.definirestiâ.." | colnames(my_data)=="Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nello.sport.per.te.piÃ¹.significativo.e.rispondi.Lui.lei..rispetto.al.tuo.sport..lo.definirestiâ...1" | colnames(my_data)=="Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nel.tuo.sport.significativo.e.rispondi..Lui.lei..rispetto.al.tuo.sport..lo.definirestiâ.." | colnames(my_data)=="Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nello.sport.che.hai.abbandonato.e.rispondi..Lui.lei..rispetto.al.tuo.sport..lo.definirestiâ..")
+
+my_data$def_genitore <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Tranquillo" | my_data[, q_index[2]] == "Tranquillo" | my_data[, q_index[3]] == "tranquillo" | my_data[, q_index[4]] == "Tranquillo" | my_data[, q_index[5]] == "Tranquillo", ]$def_genitore <- "Tranquillo"
+
+my_data[my_data[, q_index[1]] == "Indifferente" | my_data[, q_index[2]] == "Indifferente" | my_data[, q_index[3]] == "indifferente" | my_data[, q_index[4]] == "indifferente" | my_data[, q_index[5]] == "Indifferente", ]$def_genitore <- "Indifferente"
+
+my_data[my_data[, q_index[1]] == "Si arrabbiava alle gare" | my_data[, q_index[2]] == "Si arrabbiava alle gare" | my_data[, q_index[3]] == "si arrabbiava alle gare" | my_data[, q_index[4]] == "si arrabbiava alle gare" | my_data[, q_index[5]] == "Si arrabbiava alle gare", ]$def_genitore <- "Si arrabbia alle gare"
+
+my_data[my_data[, q_index[1]] == "Altro (specificare)" | my_data[, q_index[2]] == "Altro (specificare)" | my_data[, q_index[3]] == "Altro (specificare)" | my_data[, q_index[4]] == "Altro (specificare)" | my_data[, q_index[5]] == "Altro (specificare)", ]$def_genitore <- "Altro"
+
+my_data[my_data[, q_index[1]] == "Fastidioso" | my_data[, q_index[2]] == "Fastidioso" | my_data[, q_index[3]] == "fastidioso" | my_data[, q_index[4]] == "Fastidioso" | my_data[, q_index[5]] == "Fastidioso", ]$def_genitore <- "Fastidioso"
+
+my_data[my_data[, q_index[1]] == "Sostenitore positivo" | my_data[, q_index[2]] == "Sostenitore positivo" | my_data[, q_index[3]] == "sostenitore positivo" | my_data[, q_index[4]] == "sostenitore positivo" | my_data[, q_index[5]] == "Sostenitore positivo", ]$def_genitore <- "Sostenitore positivo"
+
+my_data[my_data[, q_index[1]] == "Incoraggiante" | my_data[, q_index[2]] == "Incoraggiante" | my_data[, q_index[3]] == "Incoraggiante" | my_data[, q_index[4]] == "Incoraggiante" | my_data[, q_index[5]] == "Incoraggiante", ]$def_genitore <- "Incoraggiante"
+
+my_data[my_data[, q_index[1]] == "Ansiogeno" | my_data[, q_index[2]] == "Ansiogeno" | my_data[, q_index[3]] == "ansiogeno" | my_data[, q_index[4]] == "ansiogeno" | my_data[, q_index[5]] == "Ansiogeno", ]$def_genitore <- "Ansiogeno"
+
+my_data[my_data[, q_index[1]] == "Pesante" | my_data[, q_index[2]] == "Pesante" | my_data[, q_index[3]] == "pesante" | my_data[, q_index[4]] == "pesante" | my_data[, q_index[5]] == "Pesante", ]$def_genitore <- "Pesante"
+
+my_data[my_data[, q_index[1]] == "Troppo fissato" | my_data[, q_index[2]] == "Troppo fissato" | my_data[, q_index[3]] == "troppo fissato" | my_data[, q_index[4]] == "troppo fissato" | my_data[, q_index[5]] == "Troppo fissato", ]$def_genitore <- "Troppo fissato"
+
+my_data$def_genitore <- as.factor(my_data$def_genitore)
+unique(my_data$def_genitore)
+table(my_data$def_genitore, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$def_genitore)))
+
+my_data$Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nello.sport.per.te.piÃ¹.significativo.e.rispondi.Lui.lei..rispetto.al.tuo.sport..lo.definirestiâ.. <- NULL
+my_data$Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nel.tuo.sport.e.rispondi.Il.piÃ¹.influente.tra.i.tuoi.genitori..rispetto.al.tuo.sport..lo.definirestiâ.. <- NULL
+my_data$Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nello.sport.per.te.piÃ¹.significativo.e.rispondi.Lui.lei..rispetto.al.tuo.sport..lo.definirestiâ...1 <- NULL
+my_data$Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nel.tuo.sport.significativo.e.rispondi..Lui.lei..rispetto.al.tuo.sport..lo.definirestiâ.. <- NULL
+```
+
+```{r}
+my_data$Pensa.a.quale.dei.tuoi.genitori.ti.ha.seguito.di.piÃ¹.nello.sport.che.hai.abbandonato.e.rispondi..Lui.lei..rispetto.al.tuo.sport..lo.definirestiâ.. <- NULL
+```
+
+#allenamento con preoccupazioni
+```{r}
+my_data$X.125 <- NULL
+
+q_index <- which(colnames(my_data)=="Torna.al.momento.in.cuiÂ.hai.pensato.di.abbandonare.seriamente.lo.sport.per.te.piÃ¹.significativo.e.rispondi..Mi.sono.sentito.capace.di.affrontare.lâ..allenamentoâ.." | colnames(my_data)=="Torna.al.momento.in.cuiÂ.hai.pensato.di.abbandonare.seriamente.lo.sport.per.te.piÃ¹.significativo.e.rispondi..Mi.sono.sentito.capace.di.affrontare.lâ..allenamentoâ...1" | colnames(my_data)=="Pensa.ai.mesi.che.hanno.preceduto.il.tuo.abbandono.e.rispondi..Mi.sono.sentito.capace.di.affrontare.lâ..allenamento...")
+
+my_data$allenamento_con_preoccupazioni <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "1. Completamente in disaccordo" | my_data[, q_index[2]] == "1. Completamente in disaccordo" | my_data[, q_index[3]] == "1. Completamente in disaccordo", ]$allenamento_con_preoccupazioni <- 1
+
+my_data[my_data[, q_index[1]] == "2. Abbastanza in disaccordo" | my_data[, q_index[2]] == "2. Abbastanza in disaccordo" | my_data[, q_index[3]] == "2. Abbastanza in disaccordo", ]$allenamento_con_preoccupazioni <- 2
+
+my_data[my_data[, q_index[1]] == "3. NÃ© in disaccordo nÃ© in accordo" | my_data[, q_index[2]] == "3. NÃ© in disaccordo nÃ© in accordo" | my_data[, q_index[3]] == "3. NÃ¨ in accordo nÃ¨ in disaccordo", ]$allenamento_con_preoccupazioni <- 3
+
+my_data[my_data[, q_index[1]] == "4. Abbastanza dâ€™accordo" | my_data[, q_index[2]] == "4. Abbastanza dâ€™accordo" | my_data[, q_index[3]] == "4. Abbastanza d'accordo", ]$allenamento_con_preoccupazioni <- 4
+
+my_data[my_data[, q_index[1]] == "5. Completamente dâ€™accordo" | my_data[, q_index[2]] == "5. Completamente dâ€™accordo" | my_data[, q_index[3]] == "5. Completamente d'accordo", ]$allenamento_con_preoccupazioni <- 5
+
+my_data$allenamento_con_preoccupazioni <- as.integer(my_data$allenamento_con_preoccupazioni)
+unique(my_data$allenamento_con_preoccupazioni)
+table(my_data$allenamento_con_preoccupazioni, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$allenamento_con_preoccupazioni)))
+
+my_data$Torna.al.momento.in.cuiÂ.hai.pensato.di.abbandonare.seriamente.lo.sport.per.te.piÃ¹.significativo.e.rispondi..Mi.sono.sentito.capace.di.affrontare.lâ..allenamentoâ.. <- NULL
+my_data$Torna.al.momento.in.cuiÂ.hai.pensato.di.abbandonare.seriamente.lo.sport.per.te.piÃ¹.significativo.e.rispondi..Mi.sono.sentito.capace.di.affrontare.lâ..allenamentoâ...1 <- NULL
+my_data$Pensa.ai.mesi.che.hanno.preceduto.il.tuo.abbandono.e.rispondi..Mi.sono.sentito.capace.di.affrontare.lâ..allenamento... <- NULL
+```
+
+#allenamento con stanchezza
+```{r}
+q_index <- which(colnames(my_data)=="X.126" | colnames(my_data)=="X.274" | colnames(my_data)=="X.422")
+
+my_data$allenamento_con_stanchezza <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "1. Completamente in disaccordo" | my_data[, q_index[2]] == "1. Completamente in disaccordo" | my_data[, q_index[3]] == "1. Completamente in disaccordo", ]$allenamento_con_stanchezza <- 1
+
+my_data[my_data[, q_index[1]] == "2. Abbastanza in disaccordo" | my_data[, q_index[2]] == "2. Abbastanza in disaccordo" | my_data[, q_index[3]] == "2. Abbastanza in disaccordo", ]$allenamento_con_stanchezza <- 2
+
+my_data[my_data[, q_index[1]] == "3. NÃ© in disaccordo nÃ© in accordo" | my_data[, q_index[2]] == "3. NÃ© in disaccordo nÃ© in accordo" | my_data[, q_index[3]] == "3. NÃ¨ in accordo nÃ¨ in disaccordo", ]$allenamento_con_stanchezza <- 3
+
+my_data[my_data[, q_index[1]] == "4. Abbastanza dâ€™accordo" | my_data[, q_index[2]] == "4. Abbastanza dâ€™accordo" | my_data[, q_index[3]] == "4. Abbastanza d'accordo", ]$allenamento_con_stanchezza <- 4
+
+my_data[my_data[, q_index[1]] == "5. Completamente dâ€™accordo" | my_data[, q_index[2]] == "5. Completamente dâ€™accordo" | my_data[, q_index[3]] == "5. Completamente d'accordo", ]$allenamento_con_stanchezza <- 5
+
+my_data$allenamento_con_stanchezza <- as.integer(my_data$allenamento_con_stanchezza)
+unique(my_data$allenamento_con_stanchezza)
+table(my_data$allenamento_con_stanchezza, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$allenamento_con_stanchezza)))
+
+my_data$X.126 <- NULL
+my_data$X.274 <- NULL
+my_data$X.422 <- NULL
+```
+
+#allenamento essendo indaffarato
+```{r}
+q_index <- which(colnames(my_data)=="X.127" | colnames(my_data)=="X.275" | colnames(my_data)=="X.423")
+
+my_data$allenamento_essendo_indaffarato <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "1. Completamente in disaccordo" | my_data[, q_index[2]] == "1. Completamente in disaccordo" | my_data[, q_index[3]] == "1. Completamente in disaccordo", ]$allenamento_essendo_indaffarato <- 1
+
+my_data[my_data[, q_index[1]] == "2. Abbastanza in disaccordo" | my_data[, q_index[2]] == "2. Abbastanza in disaccordo" | my_data[, q_index[3]] == "2. Abbastanza in disaccordo", ]$allenamento_essendo_indaffarato <- 2
+
+my_data[my_data[, q_index[1]] == "3. NÃ© in disaccordo nÃ© in accordo" | my_data[, q_index[2]] == "3. NÃ© in disaccordo nÃ© in accordo" | my_data[, q_index[3]] == "3. NÃ¨ in accordo nÃ¨ in disaccordo", ]$allenamento_essendo_indaffarato <- 3
+
+my_data[my_data[, q_index[1]] == "4. Abbastanza dâ€™accordo" | my_data[, q_index[2]] == "4. Abbastanza dâ€™accordo" | my_data[, q_index[3]] == "4. Abbastanza d'accordo", ]$allenamento_essendo_indaffarato <- 4
+
+my_data[my_data[, q_index[1]] == "5. Completamente dâ€™accordo" | my_data[, q_index[2]] == "5. Completamente dâ€™accordo" | my_data[, q_index[3]] == "5. Completamente d'accordo", ]$allenamento_essendo_indaffarato <- 5
+
+my_data$allenamento_essendo_indaffarato <- as.integer(my_data$allenamento_essendo_indaffarato)
+unique(my_data$allenamento_essendo_indaffarato)
+table(my_data$allenamento_essendo_indaffarato, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$allenamento_essendo_indaffarato)))
+
+my_data$X.127 <- NULL
+my_data$X.275 <- NULL
+my_data$X.423 <- NULL
+```
+
+#partecipazione gare
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Â.Partecipavi.a.gare.partite.saggi." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Â.Partecipavi.a.gare.partite.saggi..1" | colnames(my_data)=="Nei.mesi.prima.di.abbandonare.il.tuo.sportâ..Partecipavi.a.gare.partite.saggi.")
+
+my_data$partecipazione_gare <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Si" | my_data[, q_index[2]] == "Si" | my_data[, q_index[3]] == "Si", ]$partecipazione_gare <- "Si"
+
+my_data[my_data[, q_index[1]] == "No" | my_data[, q_index[2]] == "No" | my_data[, q_index[3]] == "No", ]$partecipazione_gare <- "No"
+
+my_data$partecipazione_gare <- as.factor(my_data$partecipazione_gare)
+unique(my_data$partecipazione_gare)
+table(my_data$partecipazione_gare, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$partecipazione_gare)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Â.Partecipavi.a.gare.partite.saggi. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â..Â.Partecipavi.a.gare.partite.saggi..1 <- NULL
+my_data$Nei.mesi.prima.di.abbandonare.il.tuo.sportâ..Partecipavi.a.gare.partite.saggi. <- NULL
+```
+
+#sentimento sconfitta
+```{r}
+q_index <- which(colnames(my_data)=="Perdere.una.partita..o.una.gara..â.." | colnames(my_data)=="Perdere.una.partita..o.una.gara..â...1" | colnames(my_data)=="Nei.mesi.prima.di.abbandonare.il.tuo.sportâ..Perdere.una.partita..o.una.gara..â..")
+
+my_data$sentimento_sconfitta <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Era uno stimolo per far meglio" | my_data[, q_index[2]] == "Era uno stimolo per far meglio" | my_data[, q_index[3]] == "Era uno stimolo per far meglio", ]$sentimento_sconfitta <- "Stimolo per migliorare"
+
+my_data[my_data[, q_index[1]] == "Era indifferente" | my_data[, q_index[2]] == "Era indifferente" | my_data[, q_index[3]] == "Era indifferente", ]$sentimento_sconfitta <- "Indifferente"
+
+my_data[my_data[, q_index[1]] == "Era poco rilevante" | my_data[, q_index[2]] == "Era poco rilevante" | my_data[, q_index[3]] == "Era poco rilevante", ]$sentimento_sconfitta <- "Poco rilevante"
+
+my_data[my_data[, q_index[1]] == "Era un dramma" | my_data[, q_index[2]] == "Era un dramma" | my_data[, q_index[3]] == "Era un dramma", ]$sentimento_sconfitta <- "Dramma"
+
+my_data[my_data[, q_index[1]] == "Altro (specificare)" | my_data[, q_index[2]] == "Altro (specificare)" | my_data[, q_index[3]] == "Altro (specificare)", ]$sentimento_sconfitta <- "Altro"
+
+my_data[my_data[, q_index[1]] == "Ti faceva venir voglia di smettere" | my_data[, q_index[2]] == "Ti faceva venir voglia di smettere" | my_data[, q_index[3]] == "Ti faceva venir voglia di smettere", ]$sentimento_sconfitta <- "Voglia di smettere"
+
+my_data$sentimento_sconfitta <- as.factor(my_data$sentimento_sconfitta)
+unique(my_data$sentimento_sconfitta)
+table(my_data$sentimento_sconfitta, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$sentimento_sconfitta)))
+
+my_data$Perdere.una.partita..o.una.gara..â.. <- NULL
+my_data$Perdere.una.partita..o.una.gara..â...1 <- NULL
+my_data$Nei.mesi.prima.di.abbandonare.il.tuo.sportâ..Perdere.una.partita..o.una.gara..â.. <- NULL
+```
+
+#sentimento_vittoria
+```{r}
+my_data$X.128 <- NULL
+my_data$X.129 <- NULL
+
+q_index <- which(colnames(my_data)=="Vincere.una.partita..o.una.gara..â.." | colnames(my_data)=="Vincere.una.partita..o.una.gara..â...1" | colnames(my_data)=="Nei.mesi.prima.di.abbandonare.il.tuo.sport...Vincere.una.partita..o.una.gara....")
+
+my_data$sentimento_vittoria <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Era uno stimolo per far meglio" | my_data[, q_index[2]] == "Era uno stimolo per far meglio" | my_data[, q_index[3]] == "Era uno stimolo per far meglio", ]$sentimento_vittoria <- "Stimolo per migliorare"
+
+my_data[my_data[, q_index[1]] == "Era indifferente" | my_data[, q_index[2]] == "Era indifferente" | my_data[, q_index[3]] == "Era indifferente", ]$sentimento_vittoria <- "Indifferente"
+
+my_data[my_data[, q_index[1]] == "Era poco rilevante" | my_data[, q_index[2]] == "Era poco rilevante" | my_data[, q_index[3]] == "Era poco rilevante", ]$sentimento_vittoria <- "Poco rilevante"
+
+my_data[my_data[, q_index[1]] == "Era una gioia" | my_data[, q_index[2]] == "Era una gioia" | my_data[, q_index[3]] == "Era una gioia", ]$sentimento_vittoria <- "Gioia"
+
+my_data[my_data[, q_index[1]] == "Altro (specificare)" | my_data[, q_index[2]] == "Altro (specificare)" | my_data[, q_index[3]] == "Altro (specificare)", ]$sentimento_vittoria <- "Altro"
+
+my_data[my_data[, q_index[1]] == "Ti faceva venir voglia di continuare" | my_data[, q_index[2]] == "Ti faceva venir voglia di continuare" | my_data[, q_index[3]] == "Ti faceva venir voglia di continuare", ]$sentimento_vittoria <- "Voglia di continuare"
+
+my_data$sentimento_vittoria <- as.factor(my_data$sentimento_vittoria)
+unique(my_data$sentimento_vittoria)
+table(my_data$sentimento_vittoria, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$sentimento_vittoria)))
+
+my_data$Vincere.una.partita..o.una.gara..â.. <- NULL
+my_data$Vincere.una.partita..o.una.gara..â...1 <- NULL
+my_data$Nei.mesi.prima.di.abbandonare.il.tuo.sport...Vincere.una.partita..o.una.gara.... <- NULL
+```
+
+#grado divertimento allenamento
+```{r}
+q_index <- which(colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..ti.divertivi.ad.allenamentoâ.." | colnames(my_data)=="Tra.i.tuoi.9.e.17.anni.â...In.media..ti.divertivi.nel.praticare.il.tuo.sport.significativoâ.." | colnames(my_data)=="Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..ti.divertivi.ad.allenamentoâ...1" | colnames(my_data)=="Prima.dei.17.anni.â...in.media..ti.divertivi.nel.praticare.il.tuo.sport.significativoâ.." | colnames(my_data)=="Nei.mesi.prima.di.abbandonare.il.tuo.sportâ...ti.divertivi.ad.allenamentoâ..")
+
+my_data$grado_divertimento_allenamento <- NA
+for (i in 1:length(q_index)) {
+  my_data[, q_index[i]] <- as.character(my_data[, q_index[i]])
+}
+
+my_data[my_data[, q_index[1]] == "Molto" | my_data[, q_index[2]] == "Molto" | my_data[, q_index[3]] == "Molto" | my_data[, q_index[4]] == "Molto" | my_data[, q_index[5]] == "Molto", ]$grado_divertimento_allenamento <- "Molto"
+
+my_data[my_data[, q_index[1]] == "neutrale" | my_data[, q_index[2]] == "Neutrale" | my_data[, q_index[3]] == "Neutrale" | my_data[, q_index[4]] == "neutrale" | my_data[, q_index[5]] == "Neutrale", ]$grado_divertimento_allenamento <- "Neutrale"
+
+my_data[my_data[, q_index[1]] == "poco" | my_data[, q_index[2]] == "Poco" | my_data[, q_index[3]] == "Poco" | my_data[, q_index[4]] == "poco" | my_data[, q_index[5]] == "Poco", ]$grado_divertimento_allenamento <- "Poco"
+
+my_data[my_data[, q_index[1]] == "abbastanza" | my_data[, q_index[2]] == "Abbastanza" | my_data[, q_index[3]] == "Abbastanza" | my_data[, q_index[4]] == "abbastanza" | my_data[, q_index[5]] == "Abbastanza", ]$grado_divertimento_allenamento <- "Abbastanza"
+
+my_data[my_data[, q_index[1]] == "per niente" | my_data[, q_index[2]] == "Per niente" | my_data[, q_index[3]] == "Per niente" | my_data[, q_index[4]] == "per niente" | my_data[, q_index[5]] == "Per niente", ]$grado_divertimento_allenamento <- "Per niente"
+
+my_data$grado_divertimento_allenamento <- as.factor(my_data$grado_divertimento_allenamento)
+unique(my_data$grado_divertimento_allenamento)
+table(my_data$grado_divertimento_allenamento, my_data$caso)
+cat("\nNumero missing values: ", nrow(my_data)-sum(table(my_data$grado_divertimento_allenamento)))
+
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..ti.divertivi.ad.allenamentoâ.. <- NULL
+my_data$Tra.i.tuoi.9.e.17.anni.â...In.media..ti.divertivi.nel.praticare.il.tuo.sport.significativoâ.. <- NULL
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..ti.divertivi.ad.allenamentoâ...1 <- NULL
+my_data$Prima.dei.17.anni.â...in.media..ti.divertivi.nel.praticare.il.tuo.sport.significativoâ.. <- NULL
+my_data$Nei.mesi.prima.di.abbandonare.il.tuo.sportâ...ti.divertivi.ad.allenamentoâ.. <- NULL
+```
+
+```{r}
+my_data$Ti.Ã..piaciuto.questo.test. <- NULL
+my_data$X.485 <- NULL
+my_data$X.486 <- NULL
+my_data$X.117 <- NULL
+```
+
+#definizione di cosa è lo sport
+```{r}
+definizioni_sport <- c("sport_sacrificio", "sport_divertimento", "sport_dovere", "sport_passione", "sport_bisogno_corpo_mente", "sport_essere_liberi", "sport_ricaricarsi", "sport_staccare_vita_quotidiana", "sport_scaricare_energia", "sport_perdita_tempo")
+
+for (i in 1:10) {
+  colnames(my_data)[i+114] <- definizioni_sport[i]
+  my_data[, i+114] <- as.character(my_data[, i+114])
+  my_data[my_data[, i+114] == "", ][, i+114] <- "No"
+  my_data[my_data[, i+114] != "No", ][, i+114] <- "Si"
+  my_data[, i+114] <- as.factor(my_data[, i+114])
+}
+
+table(my_data[, 115], my_data$caso)
+table(my_data[, 124], my_data$caso)
+```
+
+#moda e accontentare allenatore
+```{r}
+my_data$X.139 <- NULL
+
+id <- which(my_data$X.156 != "")
+my_data$moda[id] <- "Si"
+id <- which(my_data$X.160 != "")
+my_data$accontentare_allenatore[id] <- "Si"
+
+my_data$X.156 <- NULL
+my_data$X.160 <- NULL
+
+table(my_data$moda, my_data$caso)
+table(my_data$accontentare_allenatore, my_data$caso)
+```
+
+#fattori per continuare sport
+```{r}
+colnames(my_data)[47]
+colnames(my_data)[77]
+table(my_data[, 47], my_data$caso)
+table(my_data[, 77], my_data$caso)
+
+for (i in 1:31) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+46] <- "Si"
+}
+
+table(my_data[, 47], my_data$caso)
+table(my_data[, 77], my_data$caso)
+
+for (i in 1:33) {
+  my_data[, 125] <- NULL
+}
+```
+
+```{r}
+for (i in 1:7) {
+  my_data[, 125] <- NULL
+}
+```
+
+#definizione sport
+```{r}
+colnames(my_data)[115]
+colnames(my_data)[124]
+table(my_data[, 115], my_data$caso)
+table(my_data[, 124], my_data$caso)
+
+for (i in 1:10) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+114] <- "Si"
+}
+
+table(my_data[, 115], my_data$caso)
+table(my_data[, 124], my_data$caso)
+
+for (i in 1:11) {
+  my_data[, 125] <- NULL
+}
+```
+
+```{r}
+for (i in 1:3) {
+  my_data[, 125] <- NULL
+}
+colnames(my_data[125])
+```
+
+#moda e accontentare allenatore
+```{r}
+id <- which(my_data$X.207 != "")
+my_data$moda[id] <- "Si"
+id <- which(my_data$X.211 != "")
+my_data$accontentare_allenatore[id] <- "Si"
+
+my_data$X.207 <- NULL
+my_data$X.211 <- NULL
+
+table(my_data$moda, my_data$caso)
+table(my_data$accontentare_allenatore, my_data$caso)
+```
+
+#fattori per continuare sport
+```{r}
+colnames(my_data)[47]
+colnames(my_data)[77]
+table(my_data[, 47], my_data$caso)
+table(my_data[, 77], my_data$caso)
+
+for (i in 1:31) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+46] <- "Si"
+}
+
+table(my_data[, 47], my_data$caso)
+table(my_data[, 77], my_data$caso)
+
+for (i in 1:33) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+#fattori abbandono
+```{r}
+colnames(my_data)[78]
+colnames(my_data)[102]
+table(my_data[, 78], my_data$caso)
+table(my_data[, 102], my_data$caso)
+
+for (i in 1:25) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+77] <- "Si"
+}
+
+table(my_data[, 78], my_data$caso)
+table(my_data[, 102], my_data$caso)
+
+for (i in 1:27) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+```{r}
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Frequentaviâ...1 <- NULL                                                                                                                                               
+my_data$Quando.hai.pensato.di.abbandonare.lo.sport.per.te.piÃ¹.significativo.â...Il.tuo.allenatore.ha.influito.sulla.tua.scelta.di.continuarlo..1 <- NULL
+
+my_data$X.251 <- NULL
+```
+
+#definizione allenatore
+```{r}
+colnames(my_data)[103]
+colnames(my_data)[114]
+table(my_data[, 103], my_data$caso)
+table(my_data[, 114], my_data$caso)
+
+for (i in 1:12) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+102] <- "Si"
+}
+
+table(my_data[, 103], my_data$caso)
+table(my_data[, 114], my_data$caso)
+
+for (i in 1:13) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+```{r}
+for (i in 1:11) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+#definizione sport
+```{r}
+colnames(my_data)[115]
+colnames(my_data)[124]
+
+table(my_data[, 115], my_data$caso)
+table(my_data[, 124], my_data$caso)
+
+for (i in 1:10) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+114] <- "Si"
+}
+
+table(my_data[, 115], my_data$caso)
+table(my_data[, 124], my_data$caso)
+
+for (i in 1:11) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+#moda e accontentare allenatore
+```{r}
+id <- which(my_data$X.304 != "")
+my_data$moda[id] <- "Si"
+id <- which(my_data$X.308 != "")
+my_data$accontentare_allenatore[id] <- "Si"
+
+my_data$X.304 <- NULL
+my_data$X.308 <- NULL
+
+table(my_data$moda, my_data$caso)
+table(my_data$accontentare_allenatore, my_data$caso)
+```
+
+#fattori per continuare
+```{r}
+colnames(my_data)[47]
+colnames(my_data)[77]
+table(my_data[, 47], my_data$caso)
+table(my_data[, 77], my_data$caso)
+
+for (i in 1:31) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+46] <- "Si"
+}
+
+table(my_data[, 47], my_data$caso)
+table(my_data[, 77], my_data$caso)
+
+for (i in 1:40) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+#definizione sport
+```{r}
+colnames(my_data)[115]
+colnames(my_data)[124]
+table(my_data[, 115], my_data$caso)
+table(my_data[, 124], my_data$caso)
+for (i in 1:10) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+114] <- "Si"
+}
+
+table(my_data[, 115], my_data$caso)
+table(my_data[, 124], my_data$caso)
+
+for (i in 1:11) {
+  my_data[, 125] <- NULL
+}
+my_data$X.340 <- NULL
+my_data$Nei.mesi.prima.di.abbandonare.lo.sport.per.te.piÃ¹.significativo..con.che.frequenza.andavi.ad.allenarti. <- NULL
+colnames(my_data)[125]
+```
+
+#fattori abbandono
+```{r}
+colnames(my_data)[78]
+colnames(my_data)[102]
+table(my_data[, 78], my_data$caso)
+table(my_data[, 102], my_data$caso)
+
+for (i in 1:25) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+77] <- "Si"
+}
+
+table(my_data[, 78], my_data$caso)
+table(my_data[, 102], my_data$caso)
+
+for (i in 1:27) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+#moda e accontentare allenatore
+```{r}
+id <- which(my_data$X.382 != "")
+my_data$moda[id] <- "Si"
+id <- which(my_data$X.386 != "")
+my_data$accontentare_allenatore[id] <- "Si"
+
+my_data$X.382 <- NULL
+my_data$X.386 <- NULL
+
+table(my_data$moda, my_data$caso)
+table(my_data$accontentare_allenatore, my_data$caso)
+```
+
+#fattori continuare sport
+```{r}
+colnames(my_data)[47]
+colnames(my_data)[77]
+table(my_data[, 47], my_data$caso)
+table(my_data[, 77], my_data$caso)
+
+for (i in 1:31) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+46] <- "Si"
+}
+
+table(my_data[, 47], my_data$caso)
+table(my_data[, 77], my_data$caso)
+
+for (i in 1:36) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+#definizione allenatore
+```{r}
+colnames(my_data)[103]
+colnames(my_data)[114]
+table(my_data[, 103], my_data$caso)
+table(my_data[, 114], my_data$caso)
+
+for (i in 1:12) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+102] <- "Si"
+}
+
+table(my_data[, 103], my_data$caso)
+table(my_data[, 114], my_data$caso)
+
+for (i in 1:13) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+```{r}
+for (i in 1:12) {
+  my_data[, 125] <- NULL
+}
+colnames(my_data)[125]
+```
+
+#definizione sport
+```{r}
+colnames(my_data)[115]
+colnames(my_data)[124]
+
+table(my_data[, 115], my_data$caso)
+table(my_data[, 124], my_data$caso)
+
+for (i in 1:10) {
+  id <- which(my_data[, i+124] != "")
+  my_data[id, i+114] <- "Si"
+}
+
+table(my_data[, 115], my_data$caso)
+table(my_data[, 124], my_data$caso)
+
+for (i in 1:11) {
+  my_data[, 125] <- NULL
+}
+
+colnames(my_data)[125]
+```
+
+```{r}
+for (i in 1:56) {
+  my_data[, 125] <- NULL
+}
+colnames(my_data)[125]
+```
+
+#descrizione personalita
+```{r}
+my_data$personalita_estroversa <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_estroversa <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_estroversa <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_estroversa <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_estroversa <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_estroversa <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_estroversa <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_estroversa <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_estroversa)
+```
+
+```{r}
+my_data$personalita_polemica <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_polemica <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_polemica <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_polemica <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_polemica <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_polemica <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_polemica <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_polemica <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_polemica)
+```
+
+```{r}
+my_data$personalita_affidabile <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_affidabile <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_affidabile <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_affidabile <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_affidabile <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_affidabile <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_affidabile <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_affidabile <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_affidabile)
+```
+
+```{r}
+my_data$personalita_ansiosa <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_ansiosa <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_ansiosa <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_ansiosa <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_ansiosa <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_ansiosa <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_ansiosa <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_ansiosa <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_ansiosa)
+```
+
+```{r}
+my_data$personalita_aperta <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_aperta <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_aperta <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_aperta <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_aperta <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_aperta <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_aperta <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_aperta <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_aperta)
+```
+
+```{r}
+my_data$personalita_riservata <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_riservata <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_riservata <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_riservata <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_riservata <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_riservata <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_riservata <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_riservata <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_riservata)
+```
+
+```{r}
+my_data$personalita_comprensiva <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_comprensiva <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_comprensiva <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_comprensiva <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_comprensiva <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_comprensiva <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_comprensiva <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_comprensiva <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_comprensiva)
+```
+
+```{r}
+my_data$personalita_disorganizzata <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_disorganizzata <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_disorganizzata <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_disorganizzata <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_disorganizzata <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_disorganizzata <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_disorganizzata <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_disorganizzata <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_disorganizzata)
+```
+
+```{r}
+my_data$personalita_competitiva <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_competitiva <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_competitiva <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_competitiva <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_competitiva <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_competitiva <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_competitiva <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_competitiva <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_competitiva)
+```
+
+```{r}
+my_data$personalita_tranquilla <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_tranquilla <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_tranquilla <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_tranquilla <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_tranquilla <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_tranquilla <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_tranquilla <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_tranquilla <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_tranquilla)
+```
+
+```{r}
+my_data$personalita_abitudinaria <- NA
+my_data[, 125] <- as.character(my_data[, 125])
+my_data[my_data[, 125] == "Completamente in disaccordo", ]$personalita_abitudinaria <- 1
+my_data[my_data[, 125] == "Molto in disaccordo", ]$personalita_abitudinaria <- 2
+my_data[my_data[, 125] == "Un poâ€™ in disaccordo", ]$personalita_abitudinaria <- 3
+my_data[my_data[, 125] == "NÃ© dâ€™accordo nÃ© in disaccordo", ]$personalita_abitudinaria <- 4
+my_data[my_data[, 125] == "Un poâ€™ dâ€™accordo", ]$personalita_abitudinaria <- 5
+my_data[my_data[, 125] == "Molto dâ€™accordo", ]$personalita_abitudinaria <- 6
+my_data[my_data[, 125] == "Completamente dâ€™accordo", ]$personalita_abitudinaria <- 7
+my_data[, 125] <- NULL
+table(my_data$personalita_abitudinaria)
+```
+
+#domande aperte
+```{r}
+domande_aperte <- read.csv("00 domande aperte.csv", stringsAsFactors = F)
+my_data$sport_piu_significativo <- domande_aperte$sport_piu_significativo
+my_data$motivazione_principale_per_continuare <- domande_aperte$motivazione_principale_per_continuare
+my_data$motivazione_principale_per_abbandonare <- domande_aperte$motivazione_principale_per_abbandonare
+
+my_data$tipo_sport_significativo <- NA
+my_data[my_data$sport_piu_significativo %in% c("Baseball", "Basket", "Calcio", "Football americano", "Hockey su ghiaccio", "Hockey su prato", "Nuoto sincronizzato", "Pallavolo", "Rugby"), ]$tipo_sport_significativo <- "squadra"
+my_data[my_data$sport_piu_significativo %in% c("Arrampicata", "Arti marziali", "Atletica", "Balli da sala", "Canottaggio", "Ciclismo", "Danza classica", "Danza contemporanea", "Danza moderna", "Equitazione", "Ginnastica Artistica", "Ginnastica Ritmica", "Golf", "Nuoto", "Pattinaggio a Rotelle", "Pattinaggio su ghiaccio", "Ping pong", "Scherma", "Sci", "Skateboard", "Sport da combattimento", "Tennis", "Tiro Con L'arco", "Tuffi", "Yoga"), ]$tipo_sport_significativo <- "individuale"
+
+table(my_data$tipo_sport_significativo)
+```
+
+#CHECKPOINT -> EXPORT CSV
+```{r}
+dim(my_data)
+write.csv(my_data, "01 preprocessing.csv")
+```

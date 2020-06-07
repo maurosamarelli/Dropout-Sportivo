@@ -1,0 +1,81 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+
+#IMPORT DATASET
+```{r}
+data <- read.csv("03 encoding.csv", stringsAsFactors = F)
+dim(data)
+```
+
+#AGGIUSTAMENTO VARIABILI
+```{r}
+data$grado_divertimento_allenamento <- data$grado_divertimento_allenamento + 1
+data$personalita_competitiva <- data$personalita_competitiva + 1
+data$frequenza_settimanale <- data$frequenza_settimanale + 1
+head(data$tempo_casa_struttura_sportiva_piedi)
+```
+
+#PRODOTTO TRA FREQUENZA SETTIMANALE E DISPONIBILITA' ACCOMPAGNAMENTO GENITORI
+(1 volta, No) --> 0
+(2 volte, No) --> 0
+(3 volte, No) --> 0
+(Più di 3 volte, No) --> 0
+(1 volta, Si) --> 1
+(2 volte, Si) --> 2
+(3 volte, Si) --> 3
+(più di 3 volte, Si) --> 4
+```{r}
+data$frequenza_accompagnamento_genitori <- data$frequenza_settimanale * data$disponibilita_accompagnamento_genitori
+table(data$frequenza_accompagnamento_genitori)
+```
+
+#MODELLO BASE
+```{r}
+model <- lm(dropout ~ grado_divertimento_allenamento + personalita_competitiva + agonismo + frequenza_accompagnamento_genitori, data=data)
+summary(model)
+```
+
+#STRUMENTO ENDOGENO?
+```{r}
+model <- lm(dropout ~ grado_divertimento_allenamento + personalita_competitiva + agonismo + frequenza_accompagnamento_genitori + tempo_casa_struttura_sportiva_piedi, data=data)
+summary(model)
+```
+
+```{r}
+data[data$tempo_casa_struttura_sportiva_piedi==0, ]$tempo_casa_struttura_sportiva_piedi <- "< 15 minuti"
+data[data$tempo_casa_struttura_sportiva_piedi==1, ]$tempo_casa_struttura_sportiva_piedi <- "15 minuti"
+data[data$tempo_casa_struttura_sportiva_piedi==2, ]$tempo_casa_struttura_sportiva_piedi <- "tra 15 minuti e 1 ora"
+data[data$tempo_casa_struttura_sportiva_piedi==3, ]$tempo_casa_struttura_sportiva_piedi <- "1 ora"
+data[data$tempo_casa_struttura_sportiva_piedi==4, ]$tempo_casa_struttura_sportiva_piedi <- "> 1 ora"
+```
+
+#VERIFICO LA CORRELAZIONE DELLO STRUMENTO CON LA VARIABILE STRUMENTATA (RILEVANZA)
+```{r}
+model2 <- lm(frequenza_accompagnamento_genitori ~ tempo_casa_struttura_sportiva_piedi, data=data)
+summary(model2)
+```
+
+#I stadio
+```{r}
+stage1 <- lm(frequenza_accompagnamento_genitori ~ grado_divertimento_allenamento + personalita_competitiva + agonismo +tempo_casa_struttura_sportiva_piedi, data)
+summary(stage1)
+```
+
+#II stadio
+```{r}
+stage2 <- lm(dropout ~ grado_divertimento_allenamento + personalita_competitiva + agonismo + fitted(stage1), data)
+summary(stage2)
+```
+
+#2SLS
+#frequenza_accompagnamento_genitori = frequenza_settimanale * disponibilita_accompagnamento_genitori)
+```{r}
+library(AER)
+
+reg.iv <- ivreg(dropout ~ grado_divertimento_allenamento + personalita_competitiva + agonismo + frequenza_accompagnamento_genitori | grado_divertimento_allenamento + personalita_competitiva + agonismo + tempo_casa_struttura_sportiva_piedi, data=data)
+
+summary(reg.iv, diagnostics = TRUE)
+```
